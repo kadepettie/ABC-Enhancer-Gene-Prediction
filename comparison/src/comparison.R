@@ -45,23 +45,38 @@ qcPrediction <- function(pred.list, pred.config)  {
   qcCol <- function(col.name, colData, fill.val, isInverted) {
     #For each prediction column check that its missing fill val is at the extreme end of its range
     isBad <- (isInverted & fill.val < pmin(colData)) | (!isInverted & fill.val > pmin(colData))
-    suppressWarnings(if (isBad) stop(paste0("Fill val for column ", col.name, " is not at the extreme of its range!")))
+    suppressWarnings(if (isBad) stop(paste0("Fill val for column ", col.name, " is not at the extreme of its range!", fill.val, " ", pmin(colData))))
   }
 
   dummy <- lapply(pred.list, function(s) doOnePred(s, config = pred.config))
 }
 
-combineAllExptPred <- function(expt, pred.list, config, outdir, fill.missing) {
-  merged.list <- lapply(names(pred.list), function(s) combineSingleExptPred(expt = expt, pred = pred.list[[s]], pred.name = s, config = config, outdir = outdir, fill.missing = fill.missing))
-  merged <- Reduce(function(x, y) merge(x, y, all=TRUE), merged.list)
+combineAllExptPred <- function(expt, pred.list, config, cellMapping, outdir, fill.missing) {
+  merged.list <- lapply(names(pred.list), function(s) combineSingleExptPred(expt = expt, 
+                                                                            pred = pred.list[[s]], 
+                                                                            pred.name = s, 
+                                                                            config = config, 
+                                                                            cellMapping = cellMapping, 
+                                                                            outdir = outdir, 
+                                                                            fill.missing = fill.missing))
+  merge.by.cols <- c('chrPerturbationTarget', 'startPerturbationTarget', 
+                     'endPerturbationTarget', 'GeneSymbol', 'CellType', 'Significant', 'Regulated',  'EffectSize')
+  if ('class' %in% colnames(expt)) merge.by.cols <- c(merge.by.cols, "class")
+  
+  merged <- Reduce(function(x, y) merge(x, y, by = merge.by.cols, all=TRUE), merged.list)
   write.table(merged, file.path(outdir, "expt.pred.txt"), sep = "\t", quote = F, col.names = T, row.names = F)
   return(merged)
 }
 
-combineSingleExptPred <- function(expt, pred, pred.name, config, outdir, fill.missing=TRUE) {
+combineSingleExptPred <- function(expt, pred, pred.name, config, cellMapping, outdir, fill.missing=TRUE) {
   #Subset config to columns that actuall appear. Otherwise code will fail
   print(paste0("Overlapping predictions for predictor: ", pred.name))
   config <- subset(config, pred.col %in% colnames(pred))
+
+  
+  pred <- applyCellTypeNameMapping(pred, cellMapping)
+  # pred <- subset(pred, CellType %in% c("K562","BLD.K562.CNCR"))
+  # pred$CellType <- "K562"
   
   pred.gr <- with(pred, GRanges(paste0(CellType,":",chrElement,":",GeneSymbol), IRanges(startElement, endElement)))
   expt.gr <- with(expt, GRanges(paste0(CellType,":",chrPerturbationTarget,":",GeneSymbol), IRanges(startPerturbationTarget, endPerturbationTarget)))
@@ -75,7 +90,7 @@ combineSingleExptPred <- function(expt, pred, pred.name, config, outdir, fill.mi
   #This requires a config file describing how each prediction column should be aggregated
   agg.cols <- c("chrPerturbationTarget","startPerturbationTarget","endPerturbationTarget","GeneSymbol","CellType","Significant","Regulated","EffectSize") #"class",
   merged <- collapseEnhancersOverlappingMultiplePredictions(merged, config, agg.cols)
-  
+
   #Experimental data missing predictions
   #A tested enhancer element may not have a prediction
   #For ABC this is typically the case if the tested element does not overlap a DHS peak.
@@ -168,12 +183,15 @@ makePlots <- function(merged, config, inverse.predictors, pos.col, outdir, min.s
   #Hack for predictors where lower values are more confident (eg genomic distance, pvalue)
   #Multiply these by -1
   inverse.predictors <- intersect(inverse.predictors, colnames(merged))
-  merged[, inverse.predictors] <- -1*merged[, ..inverse.predictors]
+  
+  if (length(inverse.predictors) > 0) merged[, inverse.predictors] <- -1*merged[, ..inverse.predictors]
 
   #Compute performance objects
   pr <- sapply(pred.cols, 
-               function(s) {performance(prediction(unlist(merged[, ..s]), unlist(merged[, ..pos.col])), measure="prec", x.measure="rec")})
-  merged[, inverse.predictors] <- -1*merged[, ..inverse.predictors]
+               function(s) {performance(prediction(as.numeric(unlist(merged[, ..s])), 
+                                                   unlist(merged[, ..pos.col])), 
+                                        measure="prec", x.measure="rec")})
+  if (length(inverse.predictors) > 0) merged[, inverse.predictors] <- -1*merged[, ..inverse.predictors]
 
   pr.df <- pr2df(pr)
   write.table(pr.df, file.path(outdir, "pr.curve.txt"), sep = "\t", quote = F, col.names = T, row.names = F)
@@ -317,6 +335,17 @@ getInversePredictors <- function(pred.list, pred.config) {
   inv.pred <- subset(predConfig, lowerIsMoreConfident)$pred.col
   inv.cols <- with(expand.grid(pred.table$name, inv.pred), paste0(Var1, ".", Var2))
   return(inv.cols)
+}
+
+applyCellTypeNameMapping <- function(df, cellMapping) {
+  #Map CellType in predictions file to match experimental data file
+  for (ii in seq(nrow(cellMapping))) {
+    this.from <- strsplit(cellMapping$from[ii], split=",")[[1]]
+    this.to <- cellMapping$to[ii]
+    df$CellType[df$CellType %in% this.from] <- this.to
+  }
+
+  return(df)
 }
 
 fread_ignore_empty <- function(f, ...) {

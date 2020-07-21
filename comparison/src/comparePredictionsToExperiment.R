@@ -47,6 +47,7 @@ option.list <- list(
   make_option("--experimentalPositiveColumn", type="character", default="Regulated", help="Column of experimentalData to consider an experimental positive or negative"),
   make_option("--plotConfig", type="character", help="File describing which plots to make"),
   make_option("--predConfig", type="character", help="File describing how to aggregate/fill prediction columns"),
+  make_option("--cellNameMapping", type="character", default="", help="(Optional) File describing how to map CellTypes in the predictions files to CellTypes in the experimental data files"),
   make_option("--ignoreExptMissingPredictions", default=FALSE, action="store_true", help="Ignore EG pairs which do not have predictions. Do not fill based on predConfig"),
   make_option("--outDir", default = ".", type="character", help="Output directory"),
   make_option("--code", default = ".", type="character", help="comparison code helper functions")
@@ -54,12 +55,13 @@ option.list <- list(
 opt <- parse_args(OptionParser(option_list=option.list))
 
 #For Testing at Broad
-# basedir <- "/seq/lincRNA/jnasser/EP_prediction/code/ABC_code_better_comparison/ABC-Enhancer-Gene-Prediction/comparison/example/"
-# opt$code <- "/seq/lincRNA/jnasser/EP_prediction/code/ABC_code_better_comparison/ABC-Enhancer-Gene-Prediction/comparison/src/comparison.R"
-# opt$predictions <- "/seq/lincRNA/jnasser/EP_prediction/code/ABC_code_better_comparison/ABC-Enhancer-Gene-Prediction/comparison/example/input/pred.table.txt"
-# opt$experimentalData <- "/seq/lincRNA/jnasser/EP_prediction/code/ABC_code_better_comparison/ABC-Enhancer-Gene-Prediction/comparison/example/input/K562.ExperimentalData.slim.txt"
-# opt$plotConfig <- "/seq/lincRNA/jnasser/EP_prediction/code/ABC_code_better_comparison/ABC-Enhancer-Gene-Prediction/comparison/src/plot.config.txt"
-# opt$predConfig <- "/seq/lincRNA/jnasser/EP_prediction/code/ABC_code_better_comparison/ABC-Enhancer-Gene-Prediction/comparison/src/pred.config.txt"
+# basedir <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/"
+# opt$code <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/comparisonCode/ABC-Enhancer-Gene-Prediction/comparison/src/comparison.R"
+# opt$predictions <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/config/pred.table.listing.txt"
+# opt$experimentalData <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/known/Fulco2019.known.K562.txt"
+# opt$plotConfig <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/config/plot.config.txt"
+# opt$predConfig <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/config/pred.config.txt"
+# opt$cellNameMapping <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/config/cellNameMapping.txt"
 # opt$outDir <- paste0(basedir, "out/")
 # opt$ignoreExptMissingPredictions <- FALSE
 
@@ -67,15 +69,20 @@ source(opt$code)
 dir.create(file.path(opt$outDir))
 write.table(t(as.data.frame(opt)), file.path(opt$outDir, "params.txt"), sep = "\t", quote = F, col.names = F, row.names = T)
 
-#Read input data
+#Read config
+predConfig <- fread(opt$predConfig)
+plotConfig <- fread(opt$plotConfig)
+if (opt$cellNameMapping != "") cellMapping <- fread(opt$cellNameMapping)
+print(predConfig)
+
+#Read prediction and experiment
 print("Reading input files")
 pred.table <- fread(opt$predictions)
 pred.list <- loadPredictions(pred.table)
 expt <- loadFileString(opt$experimentalData)
 print(paste0("Loaded experimental data with ", nrow(expt), " rows"))
 expt <- subset(expt, IncludeInModel)
-predConfig <- fread(opt$predConfig)
-plotConfig <- fread(opt$plotConfig)
+
 
 #QC Input Files
 qcExpt(expt, opt)
@@ -88,6 +95,7 @@ print("Merging experiment and predictions")
 merged <- combineAllExptPred(expt = expt, 
                             pred.list = pred.list,
                             config = predConfig,
+                            cellMapping = cellMapping, 
                             outdir = opt$outDir,
                             fill.missing = !opt$ignoreExptMissingPredictions)
 
@@ -105,7 +113,6 @@ plotCellType <- function(cellType) {
   tryCatch({
       print(paste0("Making plots for celltype ", cellType))
       this.merged <- prepForPlotting(this.merged)
-      #this.merged <- subset(this.merged, !(class %in% c("tss", "promoter")))
       dir.create(file.path(opt$outDir, cellType))
       makePlots(this.merged, plotConfig, inverse.predictors, opt$experimentalPositiveColumn, file.path(opt$outDir, cellType))
       }, error = function(e) {
