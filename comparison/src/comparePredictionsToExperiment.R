@@ -55,13 +55,13 @@ option.list <- list(
 opt <- parse_args(OptionParser(option_list=option.list))
 
 #For Testing at Broad
-# basedir <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/"
+# basedir <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/notCellTypeSpecific/"
 # opt$code <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/comparisonCode/ABC-Enhancer-Gene-Prediction/comparison/src/comparison.R"
-# opt$predictions <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/config/pred.table.listing.txt"
-# opt$experimentalData <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/known/Fulco2019.known.K562.txt"
+# opt$predictions <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/notCellTypeSpecific/config/pred.table.listing.txt"
+# opt$experimentalData <- '/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/notCellTypeSpecific/Known.txt' #"/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/known/Fulco2019.known.K562.txt"
 # opt$plotConfig <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/config/plot.config.txt"
 # opt$predConfig <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/config/pred.config.txt"
-# opt$cellNameMapping <- "/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/config/cellNameMapping.txt"
+# opt$cellNameMapping <- "" #"/seq/lincRNA/RAP/GWAS/200616_ABCPaper/comapreToCRISPR/config/cellNameMapping.txt"
 # opt$outDir <- paste0(basedir, "out/")
 # opt$ignoreExptMissingPredictions <- FALSE
 
@@ -76,19 +76,21 @@ if (opt$cellNameMapping != "") cellMapping <- fread(opt$cellNameMapping)
 print(predConfig)
 
 #Read prediction and experiment
-print("Reading input files")
-pred.table <- fread(opt$predictions)
-pred.list <- loadPredictions(pred.table)
 expt <- loadFileString(opt$experimentalData)
 print(paste0("Loaded experimental data with ", nrow(expt), " rows"))
 expt <- subset(expt, IncludeInModel)
 
+print("Reading input files")
+pred.table <- fread(opt$predictions)
+pred.list <- loadPredictions(pred.table)
 
 #QC Input Files
 qcExpt(expt, opt)
 
 #QC Predictions
 qcPrediction(pred.list, predConfig)
+checkExistenceOfExperimentalGenesInPredictions(expt, pred.list, opt$outDir)
+
 
 # Merge experimental data and predictions
 print("Merging experiment and predictions")

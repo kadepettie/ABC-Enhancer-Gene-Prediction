@@ -41,7 +41,7 @@ qcPrediction <- function(pred.list, pred.config)  {
             subset(config, pred.col == s)$lowerIsMoreConfident)
       })
   }
-
+  
   qcCol <- function(col.name, colData, fill.val, isInverted) {
     #For each prediction column check that its missing fill val is at the extreme end of its range
     isBad <- (isInverted & fill.val < pmin(colData)) | (!isInverted & fill.val > pmin(colData))
@@ -49,6 +49,13 @@ qcPrediction <- function(pred.list, pred.config)  {
   }
 
   dummy <- lapply(pred.list, function(s) doOnePred(s, config = pred.config))
+}
+
+checkExistenceOfExperimentalGenesInPredictions <- function(expt, pred.list, outdir) {
+  experimentalGenes <- unique(expt$GeneSymbol)
+  res <- sapply(pred.list, function(df) {experimentalGenes %in% unique(df$GeneSymbol)})
+  df <- cbind(experimentalGenes, as.data.table(res))
+  write.table(df, file.path(outdir, "ExperimentalGenesAppearingInPredictions.txt"), sep = "\t", quote = F, col.names = T, row.names = F)
 }
 
 combineAllExptPred <- function(expt, pred.list, config, cellMapping, outdir, fill.missing) {
@@ -74,7 +81,7 @@ combineSingleExptPred <- function(expt, pred, pred.name, config, cellMapping, ou
   config <- subset(config, pred.col %in% colnames(pred))
 
   
-  pred <- applyCellTypeNameMapping(pred, cellMapping)
+  if (opt$cellNameMapping != "") pred <- applyCellTypeNameMapping(pred, cellMapping)
   # pred <- subset(pred, CellType %in% c("K562","BLD.K562.CNCR"))
   # pred$CellType <- "K562"
   
@@ -222,6 +229,7 @@ makeScatterPlot <- function(df, x.col, y.col, outdir) {
     labs(x = x.col, y = y.col, color = "")
   
   ggsave(file.path(outdir, paste0(x.col, ".", y.col, ".scatter.pdf")), g, device = "pdf")
+  ggsave(file.path(outdir, paste0(x.col, ".", y.col, ".scatter.eps")), g, device = "eps")
 }
 
 makePRCurvePlot <- function(pr.df, plot.name, col.list, outdir, pct.pos) {
@@ -251,6 +259,7 @@ makePRCurvePlot <- function(pr.df, plot.name, col.list, outdir, pct.pos) {
   }
       
   ggsave(file.path(outdir, paste0(plot.name, ".pr.pdf")), g, device = "pdf")
+  ggsave(file.path(outdir, paste0(plot.name, ".pr.eps")), g, device = "eps")
 }
 
 pr2df <- function(pr) {
@@ -375,13 +384,19 @@ smart_fread <- function(f, ...) {
   
   #con <- file(f)
   #on.exit(close(con), add = TRUE)
-  closeAllConnections()
+  tryCatch({
+    closeAllConnections()
+  }, error = function(e) {
+    print(e)
+  }
+  )
+  
   return(out)
 }
 
 loadDelimited <- function(file.list) {
   data.list <- lapply(file.list, smart_fread)
-  return(rbindlist(data.list))
+  return(rbindlist(data.list, fill = TRUE))
 }
 
 loadFileString <- function(file.str, delim = ",") {
