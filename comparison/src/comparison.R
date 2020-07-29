@@ -2,6 +2,7 @@ library(GenomicRanges)
 
 qcExpt <- function(expt, opt) {
   print("Running QC on experimental data")
+  expt <- subset(expt, IncludeInModel)
   #Check for duplicate experiments
   dupe <- any(duplicated(expt[, c("CellType","GeneSymbol","chrPerturbationTarget","startPerturbationTarget","endPerturbationTarget")] ))
   if (dupe) {
@@ -44,6 +45,7 @@ qcPrediction <- function(pred.list, pred.config)  {
   
   qcCol <- function(col.name, colData, fill.val, isInverted) {
     #For each prediction column check that its missing fill val is at the extreme end of its range
+    print(col.name)
     isBad <- (isInverted & fill.val < pmin(colData)) | (!isInverted & fill.val > pmin(colData))
     suppressWarnings(if (isBad) stop(paste0("Fill val for column ", col.name, " is not at the extreme of its range!", fill.val, " ", pmin(colData))))
   }
@@ -67,7 +69,7 @@ combineAllExptPred <- function(expt, pred.list, config, cellMapping, outdir, fil
                                                                             outdir = outdir, 
                                                                             fill.missing = fill.missing))
   merge.by.cols <- c('chrPerturbationTarget', 'startPerturbationTarget', 
-                     'endPerturbationTarget', 'GeneSymbol', 'CellType', 'Significant', 'Regulated',  'EffectSize')
+                     'endPerturbationTarget', 'GeneSymbol', "startTSS","endTSS", 'CellType', 'Significant', 'Regulated',  'EffectSize','IncludeInModel')
   if ('class' %in% colnames(expt)) merge.by.cols <- c(merge.by.cols, "class")
   
   merged <- Reduce(function(x, y) merge(x, y, by = merge.by.cols, all=TRUE), merged.list)
@@ -95,7 +97,7 @@ combineSingleExptPred <- function(expt, pred, pred.name, config, cellMapping, ou
   #Sometimes a perturbed element will overlap multiple model elements (eg in the case of a large deletion)
   #In these cases need to summarize, Eg sum ABC.Score across model elements overlapping the deletion
   #This requires a config file describing how each prediction column should be aggregated
-  agg.cols <- c("chrPerturbationTarget","startPerturbationTarget","endPerturbationTarget","GeneSymbol","CellType","Significant","Regulated","EffectSize") #"class",
+  agg.cols <- c("chrPerturbationTarget","startPerturbationTarget","endPerturbationTarget","GeneSymbol","startTSS","endTSS","CellType","Significant","Regulated","EffectSize",'IncludeInModel') #"class",
   merged <- collapseEnhancersOverlappingMultiplePredictions(merged, config, agg.cols)
 
   #Experimental data missing predictions
@@ -201,6 +203,7 @@ makePlots <- function(merged, config, inverse.predictors, pos.col, outdir, min.s
   if (length(inverse.predictors) > 0) merged[, inverse.predictors] <- -1*merged[, ..inverse.predictors]
 
   pr.df <- pr2df(pr)
+  pr.df$F1 <- with(pr.df, 2 / ((1/precision) + (1/recall)))
   write.table(pr.df, file.path(outdir, "pr.curve.txt"), sep = "\t", quote = F, col.names = T, row.names = F)
 
   #write PR summary table (AUC, cutoff, etc)
@@ -284,15 +287,23 @@ pr2df <- function(pr) {
 }
 
 makePRSummaryTable <- function(pr, min.sensitivity = .7, outdir) {
-  auc <- lapply(pr, function(s) computeAUC(s@x.values[[1]], s@y.values[[1]]))
+  
+  #compute AUC
+  #the head() calls here remove the last element of the vector. 
+  #The point is that performance objects produced by ROCR always include a Recall=100% point even if the predictor cannot achieve a recall of 100%
+  #This results in a straight line ending at (1,0) on the PR curve. This should not be included in the AUC computation.
+  auc <- lapply(pr, function(s) computeAUC(head(s@x.values[[1]], -1), 
+                                           head(s@y.values[[1]], -1))) 
   cutoff <- lapply(pr, function(s) computeCutoffGivenDesiredSensitivity(s, min.sensitivity))
+  max.F1 <- lapply(pr, function(s) max(2 / ((1/s@x.values[[1]]) + (1/s@y.values[[1]])), na.rm = T))
 
   perf.summary <- rbindlist(list(cutoff = as.list(as.numeric(cutoff)), 
-                                 AUC = as.list(as.numeric(auc))))
+                                 AUC = as.list(as.numeric(auc)),
+                                 maxF1 = as.list(as.numeric(max.F1))))
 
   perf.summary <- t(perf.summary)
   perf.summary <- as.data.table(cbind(names(pr), min.sensitivity, perf.summary))
-  colnames(perf.summary) <- c("predictor", "min.sensitivity", "cutoff", "AUPRC")
+  colnames(perf.summary) <- c("predictor", "min.sensitivity", "cutoff", "AUPRC","maxF1")
 
   write.table(perf.summary, file.path(outdir, "pr.summary.txt"), sep='\t', quote = F, row.names = F, col.names = T)
 
@@ -355,6 +366,16 @@ applyCellTypeNameMapping <- function(df, cellMapping) {
   }
 
   return(df)
+}
+
+writeExptSummary <- function(df, outdir) {
+  df.summary <- as.data.frame(list(
+    numConnections = nrow(df),
+    numIncludeInModel = sum(df$IncludeInModel),
+    numIncludeInModelRegulated = sum(df$IncludeInModel & df$Regulated)
+  ))
+  
+  write.table(df.summary, file.path(outdir, "expt.summary.txt"), sep = "\t", quote = F, col.names = T, row.names = F)
 }
 
 fread_ignore_empty <- function(f, ...) {
