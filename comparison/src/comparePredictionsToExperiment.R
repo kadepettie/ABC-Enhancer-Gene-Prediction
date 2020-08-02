@@ -103,8 +103,8 @@ merged <- combineAllExptPred(expt = expt,
                             outdir = opt$outDir,
                             fill.missing = !opt$ignoreExptMissingPredictions)
 
-merged <- subset(merged, IncludeInModel)
 writeExptSummary(merged, opt$outDir)
+merged <- subset(merged, IncludeInModel)
 
 #Hardcode distance
 #This is useful when evaluating the distance predictor in the case when a tested element is not considered a candidate element by the ABC model
