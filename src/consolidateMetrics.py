@@ -10,8 +10,8 @@ outdir = sys.argv[4]
 celltypes_files = pd.read_csv(celltypes, sep="\t", header=None)
 
 def fill_peakfile(peaks_metric):
-    title_peaks_metric = [str(peaks_metric[peak][0]).split(":")[0] for peak in range(len(peaks_metric)) if peak in range(len(peaks_metric)-2,len(peaks_metric)-1)]
-    total_peaks_metric = [str(peaks_metric[peak][0]).split(":")[1] for peak in range(len(peaks_metric)) if peak in range(len(peaks_metric)-2,len(peaks_metric)-1)]
+    title_peaks_metric = [str(peaks_metric[peak][0]).split(":")[0] for peak in range(len(peaks_metric)) if peak in range(1,len(peaks_metric)-1)]
+    total_peaks_metric = [str(peaks_metric[peak][0]).split(":")[1] for peak in range(len(peaks_metric)) if peak in range(1,len(peaks_metric)-1)]
     percentage_counts = peaks_metric[-1]
     total_sum = np.sum([np.float(percentage_counts[i]) for i in range(1,4)])
     title_peaks_metric.append("PercentageCountsInPromoterRegions")
