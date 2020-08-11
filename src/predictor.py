@@ -29,8 +29,7 @@ def make_pred_table(chromosome, enh, genes, args):
     enh['enh_idx'] = enh.index
     genes['gene_idx'] = genes.index
     enh_pr = df_to_pyranges(enh)
-    genes_pr = df_to_pyranges(genes, start_col = 'TargetGeneTSS', end_col = 'TargetGeneTSS', start_slop=args.window, end_slop = args.window)
-
+    genes_pr = df_to_pyranges(genes, start_col = 'TargetGeneTSS', end_col = 'TargetGeneTSS', start_slop=args.window, end_slop = args.window) 
     pred = enh_pr.join(genes_pr).df.drop(['Start_b','End_b','chr_b','Chromosome','Start','End'], axis = 1)
     pred['distance'] = abs(pred['enh_midpoint'] - pred['TargetGeneTSS'])
     pred = pred.loc[pred['distance'] < args.window,:] #for backwards compatability
@@ -185,7 +184,7 @@ def compute_score(enhancers, product_terms, prefix):
     scores = np.column_stack(product_terms).prod(axis = 1)
 
     enhancers[prefix + '.Score.Numerator'] = scores
-    enhancers[prefix + '.Score'] = enhancers[prefix + '.Score.Numerator'] / enhancers.groupby('TargetGene')[prefix + '.Score.Numerator'].transform('sum')
+    enhancers[prefix + '.Score'] = enhancers[prefix + '.Score.Numerator'] / enhancers.groupby(['chr', 'TargetGene'])[prefix + '.Score.Numerator'].transform('sum')
 
     return(enhancers)
 

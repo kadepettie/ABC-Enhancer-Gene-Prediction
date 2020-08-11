@@ -74,7 +74,7 @@ def main():
     print("reading genes")
     genes = pd.read_csv(args.genes, sep = "\t")
     genes = determine_expressed_genes(genes, args.expression_cutoff, args.promoter_activity_quantile_cutoff)
-    genes = genes.loc[:,['chr','symbol','tss','Expression','PromoterActivityQuantile','isExpressed', 'DHS.RPM', 'DHS.RPM.quantile', 'H3K27ac.RPM', 'H3K27ac.RPM.quantile','H3K27ac.RPM.TSS1Kb', 'H3K27ac.RPM.quantile.TSS1Kb','DHS.RPM.TSS1Kb', 'DHS.RPM.quantile.TSS1Kb']]
+    genes = genes.loc[:,['chr','gene_name','tss', 'Expression','PromoterActivityQuantile','isExpressed', 'DHS.RPM', 'DHS.RPM.quantile', 'H3K27ac.RPM', 'H3K27ac.RPM.quantile','H3K27ac.RPM.TSS1Kb', 'H3K27ac.RPM.quantile.TSS1Kb','DHS.RPM.TSS1Kb', 'DHS.RPM.quantile.TSS1Kb']]
     genes.columns = ['chr','TargetGene', 'TargetGeneTSS', 'TargetGeneExpression', 'TargetGenePromoterActivityQuantile','TargetGeneIsExpressed', 'Gene.DHS.RPM', 'Gene.DHS.RPM.quantile', 'Gene.H3K27ac.RPM', 'Gene.H3K27ac.RPM.quantile','Gene.H3K27ac.RPM.TSS1Kb', 'Gene.H3K27ac.RPM.quantile.TSS1Kb','Gene.DHS.RPM.TSS1Kb', 'Gene.DHS.RPM.quantile.TSS1Kb']
        
     print("reading enhancers")

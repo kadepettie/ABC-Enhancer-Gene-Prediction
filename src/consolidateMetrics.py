@@ -53,7 +53,11 @@ def aggregate(celltypes_files, peak_outdir, pred_outdir):
         title_preds_metric, total_preds_metric = fill_predsfile(preds_metric)
        
         for title, peaks, title_preds, preds in zip(title_peaks_metric, total_peaks_metric, title_preds_metric, total_preds_metric):
-            if cell==celltypes_files[0][1]:
+            if cell==celltypes_files[0][0]:
+                total_peaks_metric_dict[title] = peaks
+                total_preds_metric_dict[title_preds] = preds
+
+            elif cell==celltypes_files[0][1]:
                 val=[]
                 val.append(total_peaks_metric_dict[title])
                 val.append(peaks)
@@ -64,9 +68,6 @@ def aggregate(celltypes_files, peak_outdir, pred_outdir):
                 val.append(preds)
                 total_preds_metric_dict[title_preds] = val
              
-            elif cell==celltypes_files[0][0]:
-                total_peaks_metric_dict[title] = peaks
-                total_preds_metric_dict[title_preds] = preds
             else:
                 val = [i for i in total_peaks_metric_dict[title]]
                 val.append(peaks)
@@ -93,8 +94,8 @@ def aggregate(celltypes_files, peak_outdir, pred_outdir):
     
 def merge_dataframes(total_preds_metric_dict, total_peaks_metric_dict, celltype_files, outdir, outfile):
     df2 = pd.DataFrame.from_dict(total_peaks_metric_dict)
-    df2['CellTypes'] = celltype_files[0]
     df = pd.DataFrame.from_dict(total_preds_metric_dict)
+    df2['CellTypes'] = celltype_files[0]
     df['CellTypes'] = celltype_files[0]
     df3 = df.merge(df2, right_index=True, left_index=True)
     df3.to_csv(os.path.join(outdir, outfile), sep="\t", index=False)

@@ -19,6 +19,7 @@ def parseargs(required_args=True):
     
     #genes
     parser.add_argument('--genes', required=required_args, help="bed file with gene annotations. Must be in bed-6 format. Will be used to assign TSS to genes.")
+    parser.add_argument('--genes_tss', help="bed file with gene TSS annotations, if applicable. Must be in bed-6 format.")
     parser.add_argument('--genes_for_class_assignment', default=None, help="bed gene annotations for assigning elements to promoter/genic/intergenic classes. Will not be used for TSS definition")
     parser.add_argument('--ubiquitously_expressed_genes', default=None, help="File listing ubiquitously expressed genes. These will be flagged by the model, but this annotation does not affect model predictions")
     parser.add_argument('--gene_name_annotations', default="symbol", help="Comma delimited string of names corresponding to the gene identifiers present in the name field of the gene annotation bed file")
@@ -65,7 +66,8 @@ def processCellType(args):
                                                 cellType = args.cellType,
                                                 class_gene_file = args.genes_for_class_assignment)
 
-    annotate_genes_with_features(genes = genes, 
+    genes_tss = annotate_genes_with_features(genes = genes,
+                                    genes_tss = args.genes_tss,
                                     genome_sizes = args.chrom_sizes, 
                                     use_fast_count = (not args.use_secondary_counting_method),
                                     default_accessibility_feature = params['default_accessibility_feature'],
@@ -74,6 +76,7 @@ def processCellType(args):
 
     #Setup Candidate Enhancers
     load_enhancers(genes=genes_for_class_assignment, 
+                    genes_tss=genes_tss,
                     genome_sizes=args.chrom_sizes, 
                     candidate_peaks=args.candidate_enhancer_regions, 
                     skip_rpkm_quantile=args.skip_rpkm_quantile, 

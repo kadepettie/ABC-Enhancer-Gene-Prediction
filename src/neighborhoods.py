@@ -23,10 +23,10 @@ def load_genes(file,
                cellType,
                class_gene_file):
 
-    bed = read_bed(file) 
+    bed = read_bed(file, extra_colnames=["name", "score", "strand", 'Gene_ID']) 
     genes = process_gene_bed(bed, gene_id_names, primary_id, chrom_sizes)
 
-    genes[['chr', 'start', 'end', 'name', 'score', 'strand']].to_csv(os.path.join(outdir, "GeneList.bed"),
+    genes[['chr', 'start', 'end', 'name', 'score', 'strand', 'Gene_ID']].to_csv(os.path.join(outdir, "GeneList.bed"),
                                                                     sep='\t', index=False, header=False)
 
     if len(expression_table_list) > 0:
@@ -72,6 +72,7 @@ def load_genes(file,
 
 # FIX THIS portion for ENSEMBL Genes 
 def annotate_genes_with_features(genes, 
+           genes_tss,
            genome_sizes,
            skip_gene_counts=False,
            features={},
@@ -83,23 +84,33 @@ def annotate_genes_with_features(genes,
 
     #Setup files for counting
     bounds_bed = os.path.join(outdir, "GeneList.bed")
-    tss1kb = make_tss_region_file(genes, outdir, genome_sizes)
-    tss1kb_file = os.path.join(outdir, "GeneList.TSS1kb.bed")
+#    tss1kb = make_tss_region_file(genes, outdir, genome_sizes)
 
+    tss1kb_file = os.path.join(outdir, "GeneList.TSS1kb.bed")
+    tss1kb = pd.read_csv(genes_tss, sep="\t", names=['chr', 'start', 'end', 'name', 'strand', 'score','Gene_ID'])
+    tss1kb.to_csv(tss1kb_file, sep="\t", index=False, header=False)
     #Count features over genes and promoters
     genes = count_features_for_bed(genes, bounds_bed, genome_sizes, features, outdir, "Genes", force=force, use_fast_count=use_fast_count)
     tsscounts = count_features_for_bed(tss1kb, tss1kb_file, genome_sizes, features, outdir, "Genes.TSS1kb", force=force, use_fast_count=use_fast_count)
-    tsscounts = tsscounts.drop(['chr','start','end','score','strand'], axis=1)
+    tsscounts = tsscounts.drop(['score','strand'], axis=1)
 
-    merged = genes.merge(tsscounts, on="name", suffixes=['','.TSS1Kb'])
+    # make columns consistent 
+    tsscounts['gene_name'] = tsscounts['name']
+    genes['gene_name'] = genes['name']
 
+    tsscounts['name'] = [str(gene).split("_")[1] for gene in tsscounts['name']]
+    genes['name'] = [str(gene).split("_TSS")[0] for gene in genes['name']]
+    tsscounts = tsscounts.rename(columns={key:key+".TSS1Kb" for key in list(tsscounts.columns)})
+    merged = pd.concat([genes, tsscounts], axis=1)
     access_col = default_accessibility_feature + ".RPKM.quantile.TSS1Kb"  
     merged['PromoterActivityQuantile'] = ((0.0001+merged['H3K27ac.RPKM.quantile.TSS1Kb'])*(0.0001+merged[access_col])).rank(method='average', na_option="top", ascending=True, pct=True)
-
+    midpoint = 0.5*(merged['end.TSS1Kb'] - merged['start.TSS1Kb'])
+    merged['tss'] = merged['start.TSS1Kb']+midpoint
+    merged['tss'] = merged['tss'].astype('int')
     merged.to_csv(os.path.join(outdir, "GeneList.txt"),
              sep='\t', index=False, header=True, float_format="%.6f")
 
-    return merged
+    return tss1kb
 
 def make_tss_region_file(genes, outdir, sizes, tss_slop=500):
     #Given a gene file, define 1kb regions around the tss of each gene
@@ -125,15 +136,13 @@ def make_tss_region_file(genes, outdir, sizes, tss_slop=500):
 
     return(tss1kb)
 
-def process_gene_bed(bed, name_cols, main_name, chrom_sizes=None, fail_on_nonunique=True):
+def process_gene_bed(bed, name_cols, main_name, chrom_sizes=None, fail_on_nonunique=False):
 
     try:
         bed = bed.drop(['thickStart','thickEnd','itemRgb','blockCount','blockSizes','blockStarts'], axis=1)
     except Exception as e:
         pass
-    
     assert(main_name in name_cols)
-
     names = bed.name.str.split(";", expand=True)
     assert(len(names.columns) == len(name_cols.split(",")))
     names.columns = name_cols.split(",")
@@ -142,7 +151,7 @@ def process_gene_bed(bed, name_cols, main_name, chrom_sizes=None, fail_on_nonuni
     bed['name'] = bed[main_name]
     #bed = bed.sort_values(by=['chr','start']) #JN Keep original sort order
 
-    bed['tss'] = get_tss_for_bed(bed)
+    #bed['tss'] = get_tss_for_bed(bed)
 
     bed.drop_duplicates(inplace=True)
 
@@ -152,6 +161,7 @@ def process_gene_bed(bed, name_cols, main_name, chrom_sizes=None, fail_on_nonuni
         bed['chr'] = bed['chr'].astype('str') #JN needed in case chromosomes are all integer
         bed = bed[bed['chr'].isin(set(sizes['chr'].values))]
 
+    
     #Enforce that gene names should be unique
     if fail_on_nonunique:
         assert(len(set(bed['name'])) == len(bed['name'])), "Gene IDs are not unique! Failing. Please ensure unique identifiers are passed to --genes"
@@ -176,6 +186,7 @@ def load_enhancers(outdir=".",
                    genome_sizes="",
                    features={},
                    genes=None,
+                   genes_tss=None,
                    force=False,
                    candidate_peaks="",
                    skip_rpkm_quantile=False,
@@ -191,15 +202,13 @@ def load_enhancers(outdir=".",
 
 
     enhancers = count_features_for_bed(enhancers, candidate_peaks, genome_sizes, features, outdir, "Enhancers", skip_rpkm_quantile, force, use_fast_count)
-
     #cellType
     if cellType is not None:
         enhancers['cellType'] = cellType
-
     # Assign categories
     if genes is not None:
         print("Assigning classes to enhancers")
-        enhancers = assign_enhancer_classes(enhancers, genes, tss_slop = tss_slop_for_class_assignment)
+        enhancers = assign_enhancer_classes(enhancers, genes, genes_tss, tss_slop = tss_slop_for_class_assignment)
 
     #TO DO: Should qnorm each bam file separately (before averaging). Currently qnorm being performed on the average
     enhancers = run_qnorm(enhancers, qnorm)
@@ -211,17 +220,26 @@ def load_enhancers(outdir=".",
                 sep='\t', index=False, header=False)
 
 #Kristy's version
-def assign_enhancer_classes(enhancers, genes, tss_slop=500):
+def assign_enhancer_classes(enhancers, genes, genes_tss, tss_slop=500):
+    genes_tss['symbol'] = genes_tss['name']
 
+    # in assigning enhancer classes, remove NR genes 
+    genes_noNR = genes.loc[np.logical_not(genes['Gene_ID'].str.contains("NR_"))]
+    gene_pyranges = df_to_pyranges(genes_noNR)
+    genes_present = genes_noNR['Gene_ID'].drop_duplicates() 
+    # filter genes tss to only obtain gene
+    genes_tss_noNR = genes_tss.loc[genes_tss['Gene_ID'].isin(genes_present)]
     # build pyranges df 
-    tss_pyranges = df_to_pyranges(genes, start_col='tss', end_col='tss', start_slop=tss_slop, end_slop=tss_slop)
-    gene_pyranges = df_to_pyranges(genes)
-
+    if genes_tss is None:
+        tss_pyranges = df_to_pyranges(genes_noNR, start_col='tss', end_col='tss', start_slop=tss_slop, end_slop=tss_slop)
+    else:
+        tss_pyranges = df_to_pyranges(genes_tss_noNR)
+    print(tss_pyranges.head()) 
     def get_class_pyranges(enhancers, tss_pyranges = tss_pyranges, gene_pyranges = gene_pyranges): 
         '''
         Takes in PyRanges objects : Enhancers, tss_pyranges, gene_pyranges
         Returns dataframe with cluster id (representing enhancer) and symbol of the gene/promoter that is overlapped'''
-
+        
         #genes
         genic_enh = enhancers.join(gene_pyranges, suffix="_genic")
         genic_enh = genic_enh.df[['symbol','Cluster']].groupby('Cluster',as_index=False).aggregate(lambda x: ','.join(list(set(x))))
