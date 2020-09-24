@@ -109,7 +109,7 @@ def annotate_genes_with_features(genes,
 def make_tss_region_file(genes, outdir, sizes, tss_slop=500):
     #Given a gene file, define 1kb regions around the tss of each gene
 
-    sizes_pr = df_to_pyranges(read_bed(sizes + '.bed'))
+    sizes_pr = df_to_pyranges(read_chrom_sizes(sizes))
     tss1kb = genes.loc[:,['chr','start','end','name','score','strand']]
     tss1kb['start'] = genes['tss']
     tss1kb['end'] = genes['tss']
@@ -153,7 +153,7 @@ def process_gene_bed(bed, name_cols, main_name, chrom_sizes=None, fail_on_nonuni
 
     #Remove genes that are not defined in chromosomes file
     if chrom_sizes is not None:
-        sizes = read_bed(chrom_sizes)
+        sizes = read_chrom_sizes(chrom_sizes)
         bed['chr'] = bed['chr'].astype('str') #JN needed in case chromosomes are all integer
         bed = bed[bed['chr'].isin(set(sizes['chr'].values))]
 
@@ -229,32 +229,34 @@ def assign_enhancer_classes(enhancers, genes, tss_slop=500):
 
         #genes
         genic_enh = enhancers.join(gene_pyranges, suffix="_genic")
-        genic_enh = genic_enh.df[['symbol','uid']].groupby('uid',as_index=False).aggregate(lambda x: ','.join(list(set(x))))
-        
+        if len(genic_enh):
+            genic_enh = genic_enh.df[['symbol','uid']].groupby('uid',as_index=False).aggregate(lambda x: ','.join(list(set(x))))
+        else:
+            genic_enh = pd.DataFrame(columns="symbol uid".split())
+
         #promoters
         promoter_enh = enhancers.join(tss_pyranges, suffix="_promoter")
-        promoter_enh = promoter_enh.df[['symbol','uid']].groupby('uid',as_index=False).aggregate(lambda x: ','.join(list(set(x))))
-        
-        return genic_enh, promoter_enh
+        if len(promoter_enh):
+            promoter_enh = promoter_enh.df[['symbol','uid']].groupby('uid',as_index=False).aggregate(lambda x: ','.join(list(set(x))))
+        else:
+            promoter_enh = pd.DataFrame(columns="symbol uid".split())
 
-    # import pdb
-    # pdb.Pdb(stdout=sys.__stdout__).set_trace()
-    # pdb.set_trace()
+        return genic_enh, promoter_enh
 
     # label everything as intergenic
     enhancers["class"] = "intergenic"
     enhancers['uid'] = range(enhancers.shape[0])
     enh = df_to_pyranges(enhancers)
- 
+
     genes, promoters = get_class_pyranges(enh)
     enhancers = enh.df.drop(['Chromosome','Start','End'], axis=1)
     enhancers.loc[enhancers['uid'].isin(genes.uid), 'class'] = 'genic'
     enhancers.loc[enhancers['uid'].isin(promoters.uid), 'class'] = 'promoter' 
-    
+
     enhancers["isPromoterElement"] = enhancers["class"] == "promoter"
     enhancers["isGenicElement"] = enhancers["class"] == "genic"
     enhancers["isIntergenicElement"] = enhancers["class"] == "intergenic"
-  
+
     # Output stats
     print("Total enhancers: {}".format(len(enhancers)))
     print("         Promoters: {}".format(sum(enhancers['isPromoterElement'])))
@@ -438,6 +440,11 @@ def read_bed(filename, extra_colnames=bed_extra_colnames, chr=None, sort=False, 
         result.sort_values(["chr", "start", "end"], inplace=True)
     return result
 
+def read_chrom_sizes(filename):
+    result = pd.read_table(filename, names="chr end".split())
+    result['chr'] = pd.Categorical(result['chr'], ordered=True)
+    result['start'] = 0
+    return result
 
 def read_bedgraph(filename):
     read_bed(filename, extra_colnames=["score"], skip_chr_sorting=True)
@@ -515,7 +522,7 @@ def get_features(args):
 def determine_accessibility_feature(args):
     if args.default_accessibility_feature is not None:
         return args.default_accessibility_feature
-    elif (not args.ATAC) and (not args.DHS):
+    elif args.ATAC and args.DHS:
         raise RuntimeError("Both DHS and ATAC have been provided. Must set one file to be the default accessibility feature!")
     elif args.ATAC:
         return "ATAC"
