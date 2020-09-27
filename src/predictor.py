@@ -122,7 +122,7 @@ def add_hic_to_enh_gene_table(enh, genes, pred, hic_file, hic_norm_file, hic_is_
     pred.drop(['x1','x2','y1','y2','bin1','bin2','enh_idx','gene_idx','hic_idx','enh_midpoint','tss_bin','enh_bin'], inplace=True, axis = 1, errors='ignore')
         
     print('HiC added to predictions table. Elapsed time: {}'.format(time.time() - t))
-
+    print(pred.head())
     # Add powerlaw scaling
     pred = scale_hic_with_powerlaw(pred, args)
 

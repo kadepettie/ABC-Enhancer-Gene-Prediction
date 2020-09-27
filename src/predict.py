@@ -74,14 +74,13 @@ def main():
     print("reading genes")
     genes = pd.read_csv(args.genes, sep = "\t")
     genes = determine_expressed_genes(genes, args.expression_cutoff, args.promoter_activity_quantile_cutoff)
-    genes = genes.loc[:,['chr','gene_name','tss', 'Expression','PromoterActivityQuantile','isExpressed', 'DHS.RPM', 'DHS.RPM.quantile', 'H3K27ac.RPM', 'H3K27ac.RPM.quantile','H3K27ac.RPM.TSS1Kb', 'H3K27ac.RPM.quantile.TSS1Kb','DHS.RPM.TSS1Kb', 'DHS.RPM.quantile.TSS1Kb']]
-    genes.columns = ['chr','TargetGene', 'TargetGeneTSS', 'TargetGeneExpression', 'TargetGenePromoterActivityQuantile','TargetGeneIsExpressed', 'Gene.DHS.RPM', 'Gene.DHS.RPM.quantile', 'Gene.H3K27ac.RPM', 'Gene.H3K27ac.RPM.quantile','Gene.H3K27ac.RPM.TSS1Kb', 'Gene.H3K27ac.RPM.quantile.TSS1Kb','Gene.DHS.RPM.TSS1Kb', 'Gene.DHS.RPM.quantile.TSS1Kb']
-       
+    genes = genes.loc[:,['chr','gene_name','tss', 'Expression','PromoterActivityQuantile','isExpressed', 'DHS.RPM', 'DHS.RPM.quantile', 'H3K27ac.RPM', 'H3K27ac.RPM.quantile','H3K27ac.RPM.TSS1Kb', 'H3K27ac.RPM.quantile.TSS1Kb','DHS.RPM.TSS1Kb', 'DHS.RPM.quantile.TSS1Kb', 'Gene_ID']]
+    genes.columns = ['chr','TargetGene', 'TargetGeneTSS', 'TargetGeneExpression', 'TargetGenePromoterActivityQuantile','TargetGeneIsExpressed', 'Gene.DHS.RPM', 'Gene.DHS.RPM.quantile', 'Gene.H3K27ac.RPM', 'Gene.H3K27ac.RPM.quantile','Gene.H3K27ac.RPM.TSS1Kb', 'Gene.H3K27ac.RPM.quantile.TSS1Kb','Gene.DHS.RPM.TSS1Kb', 'Gene.DHS.RPM.quantile.TSS1Kb', 'Gene_ID']
     print("reading enhancers")
     enhancers_full = pd.read_csv(args.enhancers, sep = "\t")
     #TO DO
     #Think about which columns to include
-    enhancers = enhancers_full.loc[:,['chr','start','end','name','class','normalized_dhs', 'normalized_h3K27ac','activity_base','DHS.RPM' ,  'DHS.RPM.quantile', 'H3K27ac.RPM', 'H3K27ac.RPM.quantile']]
+    enhancers = enhancers_full.loc[:,['chr','start','end','name','class','normalized_dhs', 'normalized_h3K27ac','activity_base','DHS.RPM','DHS.RPM.quantile', 'H3K27ac.RPM', 'H3K27ac.RPM.quantile']]
 
     #Initialize Prediction files
     pred_file_full = os.path.join(args.outdir, "EnhancerPredictionsFull.txt")
@@ -106,7 +105,6 @@ def main():
 
         this_enh = enhancers.loc[enhancers['chr'] == chromosome, :].copy()
         this_genes = genes.loc[genes['chr'] == chromosome, :].copy()
-
         this_chr = make_predictions(chromosome, this_enh, this_genes, args)
         all_putative_list.append(this_chr)
 
@@ -116,10 +114,12 @@ def main():
     print("Writing output files...")
     all_putative = pd.concat(all_putative_list)
     all_putative['CellType'] = args.cellType
-    slim_cols = ['chr','start','end','name','TargetGene','TargetGeneTSS','CellType',args.score_column]
+    slim_cols = ['chr','start','end','name','TargetGene','TargetGeneTSS','Gene_ID','CellType',args.score_column]
     if args.run_all_genes:
         all_positive = all_putative.iloc[np.logical_and.reduce((all_putative[args.score_column] > args.threshold, ~(all_putative['class'] == "promoter"))),:]
     else:
+        # filter by genes 
+        all_putative = all_putative.loc[np.logical_not(all_putative['Gene_ID'].str.contains("NR_"))]
         all_positive = all_putative.iloc[np.logical_and.reduce((all_putative.TargetGeneIsExpressed, all_putative[args.score_column] > args.threshold, ~(all_putative['class'] == "promoter"))),:]
 
     all_positive.to_csv(pred_file_full, sep="\t", index=False, header=True, float_format="%.6f")

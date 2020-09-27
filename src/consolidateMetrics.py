@@ -5,8 +5,9 @@ import csv
 
 celltypes = sys.argv[1]
 peak_outdir = sys.argv[2]
-pred_outdir = sys.argv[3]
-outdir = sys.argv[4]
+neigh_outdir = sys.argv[3]
+pred_outdir = sys.argv[4]
+outdir = sys.argv[5]
 celltypes_files = pd.read_csv(celltypes, sep="\t", header=None)
 
 def fill_peakfile(peaks_metric):
@@ -29,24 +30,25 @@ def update_dict(peak_dict_value, value, dictionary, title):
     return total_peaks
     
 
-def aggregate(celltypes_files, peak_outdir, pred_outdir):
+def aggregate(celltypes_files, peak_outdir, neigh_outdir, pred_outdir):
     total_peaks_metric_dict ={}
     total_preds_metric_dict = {}
     for cell in celltypes_files[0]:
         print(cell)
         peaks_metric = []
         preds_metric = []
-        with open(os.path.join(peak_outdir, "{}/Peaks/PeakFileQCSummary.txt".format(str(cell))), "r") as f:
-            reader = csv.reader(f, delimiter='\t')
-            for row in reader:
-                peaks_metric.append(row)
-        with open(os.path.join(peak_outdir, "{}/Neighborhoods/PeakFileQCSummary.txt".format(str(cell))), "r") as f:
+        #with open(os.path.join(peak_outdir, "{}/Peaks/PeakFileQCSummary.txt".format(str(cell))), "r") as f:
+        #    reader = csv.reader(f, delimiter='\t')
+        #    for row in reader:
+        #        peaks_metric.append(row)
+        print(os.path.join(neigh_outdir, "Neighborhoods_{}_qnorm/PeakFileQCSummary.txt".format(str(cell))))
+        with open(os.path.join(neigh_outdir, "Neighborhoods_{}_qnorm/PeakFileQCSummary.txt".format(str(cell))), "r") as f:
             reader = csv.reader(f, delimiter='\t')
             for row in reader:
                 peaks_metric.append(row)
         title_peaks_metric, total_peaks_metric = fill_peakfile(peaks_metric)
         
-        with open(os.path.join(pred_outdir, "{}/Predictions/QCSummary.txt".format(str(cell))), "r") as file:
+        with open(os.path.join(pred_outdir, "Predictions_{}/QCSummary.txt".format(str(cell))), "r") as file:
             file_reader = csv.reader(file, delimiter='\t')
             for row in file_reader:
                 preds_metric.append(row)
@@ -104,7 +106,7 @@ def merge_dataframes(total_preds_metric_dict, total_peaks_metric_dict, celltype_
 def main():
     outfile = "Overall_QCMetrics.txt"
     print(celltypes_files[0])
-    total_preds_metric_dict, total_peaks_metric_dict = aggregate(celltypes_files, peak_outdir, pred_outdir)
+    total_preds_metric_dict, total_peaks_metric_dict = aggregate(celltypes_files, peak_outdir, neigh_outdir, pred_outdir)
     merge_dataframes(total_preds_metric_dict, total_peaks_metric_dict, celltypes_files, outdir, outfile)
    
 if __name__=="__main__":
