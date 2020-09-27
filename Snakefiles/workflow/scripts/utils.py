@@ -125,9 +125,10 @@ def save_metadata(args, duplicates):
 # This function grabs the samples that have paired ends for paired end bam processing 
 # It saves pairedend bams and singleend bams for removal of duplicates 
 def obtainDuplicated(args, subset_intersected):
-    dhs_duplicates = subset_intersected[subset_intersected.duplicated(['Experiment accession_Accessibility'], keep=False)].drop_duplicates(['Biosample term name', 'Biological replicate(s)_Accessibility'])
+    duplicate_merge_columns = ['Biosample term name', 'Biosample organism', 'Biosample treatments','Biosample treatments amount', 'Biosample treatments duration','Biosample genetic modifications methods','Biosample genetic modifications categories','Biosample genetic modifications targets', 'Biosample genetic modifications gene targets', 'File assembly', 'Genome annotation', 'File format', 'File type', 'Output type', 'Lab', 'Biological replicate(s)_Accessibility']
+    dhs_duplicates = subset_intersected[subset_intersected.duplicated(['Experiment accession_Accessibility'], keep=False)].drop_duplicates(duplicate_merge_columns)
     if args.h3k27ac is not None:
-        h3k27acduplicates = subset_intersected[subset_intersected.duplicated(['Experiment accession_H3K27ac'], keep=False)].drop_duplicates(['Biosample term name', 'Biological replicate(s)_H3K27ac'])
+        h3k27acduplicates = subset_intersected[subset_intersected.duplicated(['Experiment accession_H3K27ac'], keep=False)].drop_duplicates(duplicate_merge_columns)
     
         comb_duplicates = pd.concat([dhs_duplicates, h3k27acduplicates])
         duplicates = comb_duplicates.drop_duplicates()
