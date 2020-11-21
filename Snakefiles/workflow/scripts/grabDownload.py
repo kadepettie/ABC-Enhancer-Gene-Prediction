@@ -49,10 +49,12 @@ def assignFiltersToDataFrame(args):
     # load data 
     dhs_data, dhs_fastq = load_data(args.dhs, args.dhs_fastq)
     dhs_alignment_bam = mapExperimentToLength(dhs_data, dhs_fastq)
-    merge_columns = ['Biosample term name','Biosample organism', 'Biosample treatments','Biosample treatments amount', 'Biosample treatments duration','Biosample genetic modifications methods','Biosample genetic modifications categories','Biosample genetic modifications targets', 'Biosample genetic modifications gene targets', 'File assembly', 'Genome annotation', 'File format', 'File type', 'Output type']
+    merge_columns = ['Biosample term name','Biosample organism', 'Biosample treatments','Biosample treatments amount', 'Biosample treatments duration','Biosample genetic modifications methods','Biosample genetic modifications categories','Biosample genetic modifications targets', 'Biosample genetic modifications gene targets', 'File assembly', 'Genome annotation', 'File format', 'File type', 'Output type', 'Lab']
     if args.h3k27ac is not None and args.h3k27ac_fastq is not None:
         h3k27ac_data, h3k27ac_fastq = load_data(args.h3k27ac, args.h3k27ac_fastq)
         h3k27ac_alignment_bam = mapExperimentToLength(h3k27ac_data, h3k27ac_fastq)
+        dhs_alignment_bam['Biosample genetic modifications methods'] = dhs_alignment_bam['Biosample genetic modifications methods'].astype('str').fillna(0.0)
+        h3k27ac_alignment_bam['Biosample genetic modifications methods'] = h3k27ac_alignment_bam['Biosample genetic modifications methods'].astype('str').fillna(0.0)
         intersected = pd.merge(dhs_alignment_bam, h3k27ac_alignment_bam, how='inner', on=merge_columns, suffixes=('_Accessibility', '_H3K27ac'))
     else:
         intersected_columns = list(dhs_alignment_bam.columns)
@@ -69,17 +71,17 @@ def assignFiltersToDataFrame(args):
     # filter for filtered file + released files 
     # fill columns that are filled with NAN
     df = intersected.fillna(0.0)
-    
     # grab entries with biological replicates 
     # grab celltypes with biological replicates 
     full_metadata, metadata_unique = obtainDuplicated(args, df)
+
     # grab entries with no biological repliates 
     # filter for mapped read lengths of usually 32.0 or 36.0
     
     # metadata_unique contains the combined accession numbers for experiments with technical/biological replicates 
     # full metadata contains every technical and biological replicate as its own single entry
     # save relevant columns into input data lookup for input into ABC code
-    prepareLookup(args, metadata_unique, "input_data_lookup")
+    prepareLookup(args, full_metadata, "input_data_lookup")
     return full_metadata
 
 def download_single_bam(bam):
@@ -99,15 +101,14 @@ def downloadFiles(args, df):
     outfile=os.path.join(args.outdir, "linkstodownload.txt")
     download_links[['download_links']].to_csv( outfile, sep="\t", index=False, header=None)
     
-#    if not os.path.exists(args.data_outdir):
-#        os.mkdir(args.data_outdir)
-#    if args.apply_pool:
-#        with Pool(int(args.threads)) as p:
-#            p.map(download_single_bam, zip(list(download_links['download_links']), itertools.repeat(args.data_outdir)))
-# 
-#    else:
-#        for link in list(download_links['download_links']):
-#            download_single_bam(link)
+    if not os.path.exists(args.data_outdir):
+        os.mkdir(args.data_outdir)
+    if args.apply_pool:
+        with Pool(int(args.threads)) as p:
+            p.map(download_single_bam, zip(list(download_links['download_links']), itertools.repeat(args.data_outdir))) 
+    else:
+        for link in list(download_links['download_links']):
+            download_single_bam(link)
     return outfile 
 
 def save_paired_single_end_files(args, metadata):
