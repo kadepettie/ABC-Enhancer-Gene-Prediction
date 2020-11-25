@@ -18,6 +18,7 @@ def parse_args():
     parser.add_argument('--h3k27ac_fastq', help="H3K27ac experiments file fastq metadata")
     parser.add_argument('--atac', help="ATAC experiments file")
     parser.add_argument('--atac_fastq', help="ATAC experiments file fastq metadata")
+    parser.add_argument('--expt_file', help="File that holds all experimental name and summary from ENCODE")
     parser.add_argument('--genome_assembly', help="Genome assembly")
     parser.add_argument('--download_files', action='store_true', help="Flag to download files or not")
     parser.add_argument('--outdir', default=".", help="Outdir to save downloaded metadata files")
@@ -47,14 +48,17 @@ def load_data(bam, fastq):
 def assignFiltersToDataFrame(args):
     # open dataframes 
     # load data 
+    experiment_metadata = pd.read_csv(args.expt_file, sep="\t", header=None)
     dhs_data, dhs_fastq = load_data(args.dhs, args.dhs_fastq)
     dhs_alignment_bam = mapExperimentToLength(dhs_data, dhs_fastq)
-    merge_columns = ['Biosample term name','Biosample organism', 'Biosample treatments','Biosample treatments amount', 'Biosample treatments duration','Biosample genetic modifications methods','Biosample genetic modifications categories','Biosample genetic modifications targets', 'Biosample genetic modifications gene targets', 'File assembly', 'Genome annotation', 'File format', 'File type', 'Output type', 'Lab']
+    merge_columns = ['Biosample term name','Biosample organism', 'Biosample treatments','Biosample treatments amount', 'Biosample treatments duration','Biosample genetic modifications methods','Biosample genetic modifications categories','Biosample genetic modifications targets', 'Biosample genetic modifications gene targets', 'File assembly', 'Genome annotation', 'File format', 'File type', 'Output type', 'Lab', 'Biosample summary']
+    dhs_alignment_bam = rename_biosample(experiment_metadata, dhs_alignment_bam)    
     if args.h3k27ac is not None and args.h3k27ac_fastq is not None:
         h3k27ac_data, h3k27ac_fastq = load_data(args.h3k27ac, args.h3k27ac_fastq)
         h3k27ac_alignment_bam = mapExperimentToLength(h3k27ac_data, h3k27ac_fastq)
         dhs_alignment_bam['Biosample genetic modifications methods'] = dhs_alignment_bam['Biosample genetic modifications methods'].astype('str').fillna(0.0)
         h3k27ac_alignment_bam['Biosample genetic modifications methods'] = h3k27ac_alignment_bam['Biosample genetic modifications methods'].astype('str').fillna(0.0)
+        h3k27ac_alignment_bam = rename_biosample(experiment_metadata,h3k27ac_alignment_bam)
         intersected = pd.merge(dhs_alignment_bam, h3k27ac_alignment_bam, how='inner', on=merge_columns, suffixes=('_Accessibility', '_H3K27ac'))
     else:
         intersected_columns = list(dhs_alignment_bam.columns)
@@ -65,7 +69,8 @@ def assignFiltersToDataFrame(args):
         atac_df = pd.read_csv(args.atac, sep="\t")
         atac_fastq = pd.read_csv(args.atac_fastq, sep="\t")
         atac = mapExperimentToLength(atac_df, atac_fastq)
-        intersected_df = pd.merge(atac, h3k27ac_data, how='inner', on=merge_columns, suffixes=('_Accessibility', '_H3K27ac'))
+        atac = rename_biosample(experiment_metadata, atac)
+        intersected_df = pd.merge(atac, h3k27ac_alignment_bam, how='inner', on=merge_columns, suffixes=('_Accessibility', '_H3K27ac'))
         copy = intersected
         intersected = pd.concat([copy, intersected_df])
     # filter for filtered file + released files 
@@ -83,6 +88,20 @@ def assignFiltersToDataFrame(args):
     # save relevant columns into input data lookup for input into ABC code
     prepareLookup(args, full_metadata, "input_data_lookup")
     return full_metadata
+
+def rename_biosample(expt_file, data): 
+    data['Biosample summary'] = data['Biosample term name'] 
+    data['Biosample stage'] = 'unknown'
+    for expt in data['Experiment accession']:
+        orig_matched_index = data.loc[data['Experiment accession']==expt].index.astype('int')
+        matched = expt_file.loc[expt_file[1]==expt]
+        if len(matched) > 0:
+            name = matched[6].values[0]
+            stage = matched[20].values[0]
+            biosample_name = str(name).replace(" ", "_")
+            data.loc[orig_matched_index, 'Biosample summary'] = biosample_name
+            data.loc[orig_matched_index, 'Biosample stage'] = stage
+    return data
 
 def download_single_bam(bam):
     command = "wget {} -P {}".format(bam[0], bam[1])
