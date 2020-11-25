@@ -1,0 +1,171 @@
+Audit WARNING	Audit INTERNAL_ACTION	Audit NOT_COMPLIANT	Audit ERROR
+low read length, mild to moderate bottlenecking			
+low read depth, moderate library complexity, low read length, mild to moderate bottlenecking			
+			
+mild to moderate bottlenecking, inconsistent platforms			
+low read depth, low read length, inconsistent platforms			
+low read depth, moderate library complexity, control low read depth, mild to moderate bottlenecking, low read length			
+low read depth, mixed run types, control low read depth			
+low read depth			
+	mismatched status		
+control low read depth	NTR biosample		
+	biological replicates with identical biosample	insufficient read length	
+mixed read lengths, mixed run types, moderate library complexity, low read length, mild to moderate bottlenecking			
+low read depth, antibody characterized with exemption, low read length, mild to moderate bottlenecking		poor library complexity, severe bottlenecking	
+moderate library complexity, mild to moderate bottlenecking			
+low read length, control low read depth, low read depth			
+low read depth, moderate library complexity, inconsistent platforms, low read length, mild to moderate bottlenecking			
+low read depth, low read length			
+low read depth, control low read depth	experiment not submitted to GEO		missing antibody
+mild to moderate bottlenecking, inconsistent platforms	experiment not submitted to GEO		
+	experiment not submitted to GEO		missing antibody
+	NTR biosample, experiment not submitted to GEO		missing antibody
+moderate library complexity, low read length, mild to moderate bottlenecking	mismatched status		
+mild to moderate bottlenecking			
+low read depth, mild to moderate bottlenecking, low read length, inconsistent platforms			
+moderate library complexity, mild to moderate bottlenecking, inconsistent platforms		insufficient read depth	
+moderate library complexity, low read length, mild to moderate bottlenecking		insufficient read depth	
+control low read depth			
+low read depth, low read length, mild to moderate bottlenecking			
+low read depth, low read length, inconsistent platforms		insufficient read depth	
+low read length, control low read depth			
+low read length			
+low read length, control low read depth, mild to moderate bottlenecking, low read depth			
+low read length, control low read depth		insufficient read depth	
+mild to moderate bottlenecking, low read length, inconsistent platforms			
+low read depth, control low read depth, mild to moderate bottlenecking, inconsistent platforms, low read length			
+mild to moderate bottlenecking, low read length, inconsistent platforms		insufficient read depth	
+low read length, inconsistent platforms			
+low read length, control low read depth, inconsistent platforms, low read depth			
+low read length, mild to moderate bottlenecking		poor library complexity, severe bottlenecking, insufficient read depth	extremely low read depth
+moderate library complexity, control low read depth, mild to moderate bottlenecking, inconsistent platforms, low read length		poor library complexity, severe bottlenecking	
+mild to moderate bottlenecking	NTR biosample		
+low read length, mild to moderate bottlenecking		poor library complexity, severe bottlenecking, insufficient read depth	
+low read length, mild to moderate bottlenecking		poor library complexity	
+mild to moderate bottlenecking		poor library complexity, insufficient read depth	
+low read depth, moderate library complexity, mild to moderate bottlenecking			
+	experiment not submitted to GEO		
+moderate library complexity	experiment not submitted to GEO	severe bottlenecking	
+low read depth, mixed run types, low read length, mild to moderate bottlenecking		poor library complexity, severe bottlenecking	
+inconsistent platforms			
+	biological replicates with identical biosample		
+mixed read lengths, moderate library complexity, inconsistent platforms, low read length, mild to moderate bottlenecking			
+mild to moderate bottlenecking	inconsistent mapped reads lengths	poor library complexity	
+low read depth, mild to moderate bottlenecking	biological replicates with identical biosample		
+control low read depth		control insufficient read depth, insufficient read depth	
+mixed run types			
+low read length, control low read depth, mild to moderate bottlenecking, low read depth	biological replicates with identical biosample	insufficient read depth	
+low read depth, mixed read lengths, low read length, inconsistent platforms			
+low read depth, low read length, mild to moderate bottlenecking	biological replicates with identical biosample		
+low read length		control insufficient read depth, insufficient read depth	
+moderate library complexity, low read length, mild to moderate bottlenecking			
+	unreplicated experiment, NTR biosample, experiment not submitted to GEO		
+moderate library complexity, mild to moderate bottlenecking, inconsistent platforms	experiment not submitted to GEO		
+low read length, control low read depth, inconsistent platforms, low read depth	sequencing runs labeled as technical replicates, experiment not submitted to GEO		extremely low read depth
+missing genetic modification reagents, moderate library complexity, missing genetic modification characterization, missing biosample characterization, mild to moderate bottlenecking	inconsistent genetic modification targets		
+low read depth, low read length, inconsistent platforms	biological replicates with identical biosample		
+moderate library complexity, control low read depth, mild to moderate bottlenecking, inconsistent platforms, low read length		insufficient read depth	extremely low read depth
+low read depth, moderate library complexity, low read length, mild to moderate bottlenecking	biological replicates with identical biosample		
+low read length	unreplicated experiment, NTR biosample, experiment not submitted to GEO		
+low read depth, mild to moderate bottlenecking			
+low read depth, mixed read lengths, moderate library complexity, low read length, mild to moderate bottlenecking			
+low read depth, mixed read lengths, mixed run types, mild to moderate bottlenecking, antibody characterized with exemption, low read length		poor library complexity, severe bottlenecking	
+moderate library complexity, mild to moderate bottlenecking, low read length, inconsistent platforms		insufficient read depth	
+low read depth, moderate library complexity, mixed run types, inconsistent platforms, mild to moderate bottlenecking, low read length			
+low read depth	inconsistent mapped reads lengths	control insufficient read depth	
+mild to moderate bottlenecking		poor library complexity, severe bottlenecking	
+mixed read lengths, mild to moderate bottlenecking	biological replicates with identical biosample		
+mixed read lengths, mild to moderate bottlenecking, low read length, moderate library complexity			
+mild to moderate bottlenecking	biological replicates with identical biosample		
+low read depth, moderate library complexity, mild to moderate bottlenecking, inconsistent platforms			
+low read length, moderate library complexity, control low read depth, mild to moderate bottlenecking		insufficient read depth	
+moderate library complexity, mild to moderate bottlenecking		insufficient read depth	
+low read length, mixed read lengths, control low read depth, low read depth		insufficient read length	
+low read length, inconsistent platforms			inconsistent ontology term
+low read length, moderate library complexity, control low read depth, mild to moderate bottlenecking			
+low read depth, mild to moderate bottlenecking, inconsistent platforms		poor library complexity, severe bottlenecking	
+low read depth, mixed read lengths, control low read depth, inconsistent platforms, low read length		insufficient read depth, insufficient read length	
+low read depth, moderate library complexity, control low read depth, inconsistent platforms, mild to moderate bottlenecking, low read length			
+low read length, inconsistent platforms		insufficient read depth	extremely low read depth
+low read length, control low read depth, mild to moderate bottlenecking		insufficient read depth	
+moderate library complexity, mild to moderate bottlenecking	mismatched file status, biological replicates with identical biosample		
+low read depth, moderate library complexity, control low read depth, mild to moderate bottlenecking			
+mixed read lengths, low read length, mild to moderate bottlenecking		poor library complexity	
+mild to moderate bottlenecking, low read length, inconsistent platforms		control insufficient read depth	
+low read length, control low read depth, mild to moderate bottlenecking, low read depth		poor library complexity, severe bottlenecking, insufficient read depth	
+low read depth, moderate library complexity, mild to moderate bottlenecking, antibody characterized with exemption, low read length			
+low read depth, mixed read lengths, mixed run types, mild to moderate bottlenecking, low read length		poor library complexity, severe bottlenecking	
+moderate library complexity, mild to moderate bottlenecking, low read length, inconsistent platforms		poor library complexity, severe bottlenecking, insufficient read depth	
+mixed run types, mild to moderate bottlenecking			
+moderate library complexity, low read length, mild to moderate bottlenecking		poor library complexity, severe bottlenecking, insufficient read depth	
+		control insufficient read depth, insufficient read depth	
+low read length, control low read depth, mild to moderate bottlenecking, low read depth		poor library complexity, severe bottlenecking	
+low read depth	biological replicates with identical biosample		
+low read depth, moderate library complexity, inconsistent platforms, low read length, mild to moderate bottlenecking	NTR biosample		
+mild to moderate bottlenecking	biological replicates with identical biosample	insufficient read depth	
+mild to moderate bottlenecking, low read length, inconsistent platforms		poor library complexity, insufficient read depth	
+	NTR biosample		
+low read depth, mild to moderate bottlenecking		poor library complexity, control insufficient read depth	
+moderate library complexity, mild to moderate bottlenecking	biological replicates with identical biosample		
+low read depth, low read length	biological replicates with identical biosample		
+low read depth, mild to moderate bottlenecking, low read length, inconsistent platforms	biological replicates with identical biosample		
+low read depth, mixed read lengths		insufficient read length	
+low spot score, mixed read lengths		insufficient read length	
+low spot score, mixed read lengths			
+low read depth	sequencing runs labeled as technical replicates, mismatched file status		file validation error
+low spot score	experiment not submitted to GEO		
+low spot score	unreplicated experiment		
+		insufficient read length	
+low read depth	mismatched file status		file validation error
+low read depth	mismatched file status, NTR biosample		file validation error
+low spot score	sequencing runs labeled as technical replicates, mismatched file status, experiment not submitted to GEO		file validation error
+low read depth, missing biosample characterization, missing genetic modification characterization, missing genetic modification reagents	mismatched file status		file validation error
+missing biosample characterization, missing genetic modification characterization	NTR biosample		
+low read depth, low spot score	unreplicated experiment, experiment not submitted to GEO		
+low read depth	mismatched file status	insufficient read length	file validation error
+low spot score			
+	mismatched file status, unreplicated experiment		file validation error
+low read depth, low spot score	mismatched file status		file validation error
+low spot score			inconsistent ontology term
+	mismatched file status, unreplicated experiment, NTR biosample, experiment not submitted to GEO		file validation error
+	sequencing runs labeled as technical replicates, mismatched file status, NTR biosample		file validation error
+	sequencing runs labeled as technical replicates, mismatched file status		file validation error
+low read depth, low spot score		insufficient read length	
+	mismatched file status		file validation error
+low spot score	mismatched file status		file validation error
+low spot score	mismatched file status, unreplicated experiment, experiment not submitted to GEO		file validation error
+low spot score	mismatched file status, experiment not submitted to GEO		file validation error
+low spot score		insufficient read length	
+low read depth, low spot score			
+low read depth	mismatched file status, mismatched status		file validation error
+	sequencing runs labeled as technical replicates, mismatched file status, unreplicated experiment		file validation error
+low read depth, low spot score	mismatched file status, mismatched status		file validation error
+	mismatched file status		extremely low read depth, file validation error
+low spot score	sequencing runs labeled as technical replicates, mismatched file status		file validation error
+mixed read lengths	NTR biosample		
+mixed read lengths	sequencing runs labeled as technical replicates, mismatched file status		file validation error
+	mismatched file status	unreplicated experiment	file validation error
+low read depth		insufficient read length	
+	mismatched file status, experiment not submitted to GEO		file validation error
+mixed read lengths		insufficient read length	
+low spot score	mismatched file status, NTR biosample, experiment not submitted to GEO		file validation error
+	sequencing runs labeled as technical replicates, mismatched file status, experiment not submitted to GEO	unreplicated experiment	file validation error
+low spot score	mismatched file status, unreplicated experiment		file validation error
+	mismatched file status, unreplicated experiment, experiment not submitted to GEO		file validation error
+low spot score			extremely low read depth
+			extremely low read depth
+	sequencing runs labeled as technical replicates, mismatched file status	insufficient read length	file validation error
+	mismatched file status, NTR biosample, experiment not submitted to GEO		file validation error
+low read depth	sequencing runs labeled as technical replicates, mismatched file status, experiment not submitted to GEO		file validation error
+mixed read lengths, missing genetic modification reagents, missing biosample characterization			extremely low read depth
+low spot score, mixed read lengths	NTR biosample		
+	mismatched file status, NTR biosample, experiment not submitted to GEO	unreplicated experiment	file validation error
+low spot score, mixed read lengths			extremely low read depth
+low read depth, mixed read lengths	sequencing runs labeled as technical replicates, mismatched file status		file validation error
+low read depth, low spot score	sequencing runs labeled as technical replicates, mismatched file status		file validation error
+low read depth, low spot score	mismatched file status, NTR biosample		file validation error
+low read depth, low spot score, mixed read lengths		insufficient read length	
+	sequencing runs labeled as technical replicates, mismatched file status, experiment not submitted to GEO		file validation error
+low spot score	mismatched file status		extremely low read depth, file validation error
+mixed read lengths			extremely low read depth
+	mismatched file status, NTR biosample		file validation error
