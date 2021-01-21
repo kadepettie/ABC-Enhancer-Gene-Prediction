@@ -70,7 +70,12 @@ def assignFiltersToDataFrame(args):
         atac_fastq = pd.read_csv(args.atac_fastq, sep="\t")
         atac = mapExperimentToLength(atac_df, atac_fastq)
         atac = rename_biosample(experiment_metadata, atac)
-        intersected_df = pd.merge(atac, h3k27ac_alignment_bam, how='inner', on=merge_columns, suffixes=('_Accessibility', '_H3K27ac'))
+        merge_cols = [i for i in merge_columns if str(i) in list(atac.columns)]
+        atac['Biosample genetic modifications targets'] = atac['Biosample genetic modifications targets'].astype('str').fillna(0.0)
+        atac['Biosample genetic modifications gene targets'] = atac['Biosample genetic modifications gene targets'].astype('str').fillna(0.0)
+        h3k27ac_alignment_bam['Biosample genetic modifications targets'] = h3k27ac_alignment_bam['Biosample genetic modifications targets'].astype('str').fillna(0.0)
+        h3k27ac_alignment_bam['Biosample genetic modifications gene targets'] = h3k27ac_alignment_bam['Biosample genetic modifications gene targets'].astype('str').fillna(0.0)
+        intersected_df = pd.merge(atac, h3k27ac_alignment_bam, how='inner', on=merge_cols, suffixes=('_Accessibility', '_H3K27ac'))
         copy = intersected
         intersected = pd.concat([copy, intersected_df])
     # filter for filtered file + released files 
