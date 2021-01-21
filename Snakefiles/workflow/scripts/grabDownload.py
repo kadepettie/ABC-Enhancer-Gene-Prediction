@@ -51,7 +51,7 @@ def assignFiltersToDataFrame(args):
     experiment_metadata = pd.read_csv(args.expt_file, sep="\t", header=None)
     dhs_data, dhs_fastq = load_data(args.dhs, args.dhs_fastq)
     dhs_alignment_bam = mapExperimentToLength(dhs_data, dhs_fastq)
-    merge_columns = ['Biosample term name','Biosample organism', 'Biosample treatments','Biosample treatments amount', 'Biosample treatments duration','Biosample genetic modifications methods','Biosample genetic modifications categories','Biosample genetic modifications targets', 'Biosample genetic modifications gene targets', 'File assembly', 'Genome annotation', 'File format', 'File type', 'Output type', 'Lab', 'Biosample summary']
+    merge_columns = ['Biosample term name','Biosample organism', 'Biosample treatments','Biosample treatments amount', 'Biosample treatments duration','Biosample genetic modifications methods','Biosample genetic modifications categories','Biosample genetic modifications targets', 'Biosample genetic modifications gene targets', 'File assembly', 'Genome annotation', 'File format', 'File type', 'Output type', 'Lab', 'Biosample stage']
     dhs_alignment_bam = rename_biosample(experiment_metadata, dhs_alignment_bam)    
     if args.h3k27ac is not None and args.h3k27ac_fastq is not None:
         h3k27ac_data, h3k27ac_fastq = load_data(args.h3k27ac, args.h3k27ac_fastq)
@@ -92,15 +92,18 @@ def assignFiltersToDataFrame(args):
 def rename_biosample(expt_file, data): 
     data['Biosample summary'] = data['Biosample term name'] 
     data['Biosample stage'] = 'unknown'
+    data['Biosample age'] = 'unknown'
     for expt in data['Experiment accession']:
         orig_matched_index = data.loc[data['Experiment accession']==expt].index.astype('int')
         matched = expt_file.loc[expt_file[1]==expt]
         if len(matched) > 0:
             name = matched[6].values[0]
             stage = matched[20].values[0]
+            age = matched[21].values[0]
             biosample_name = str(name).replace(" ", "_")
             data.loc[orig_matched_index, 'Biosample summary'] = biosample_name
             data.loc[orig_matched_index, 'Biosample stage'] = stage
+            data.loc[orig_matched_index, 'Biosample age'] = age
     return data
 
 def download_single_bam(bam):
