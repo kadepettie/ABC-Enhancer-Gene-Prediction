@@ -1,0 +1,7 @@
+tss_file ../refseq_data/refGene.txt.gz.annotation_INPUT.tsv.sorted
+dhs /srv/scratch/kmualim/jamboree_june_2020/data/ENCFF179GFN.bam
+h3k27ac /srv/scratch/kmualim/jamboree_june_2020/data/ENCFF992MUX_pooled.bam
+chrom_sizes /mnt/lab_data2/kmualim/data/send_to_Kristy/hg19.chrom.sizes
+gene_outf K562_Gene.txt
+genetss_outf K562_GeneTSS.txt
+outDir /mnt/lab_data3/kmualim/genome_files/refseq_data/K562
