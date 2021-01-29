@@ -1,0 +1,9 @@
+predictions	example/input/pred.table.txt
+experimentalData	example/input/K562.ExperimentalData.slim.txt
+experimentalPositiveColumn	Regulated
+plotConfig	src/plot.config.txt
+predConfig	src/pred.config.txt
+ignoreExptMissingPredictions	FALSE
+outDir	example/out
+code	src/comparison.R
+help	FALSE
