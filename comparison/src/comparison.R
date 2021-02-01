@@ -69,9 +69,8 @@ combineAllExptPred <- function(expt, pred.list, config, cellMapping, outdir, fil
                                                                             outdir = outdir, 
                                                                             fill.missing = fill.missing))
   merge.by.cols <- c('chrPerturbationTarget', 'startPerturbationTarget', 
-                     'endPerturbationTarget', 'GeneSymbol', "startTSS","endTSS", 'CellType', 'Significant', 'Regulated',  'EffectSize','IncludeInModel')
+                     'endPerturbationTarget', 'GeneSymbol', 'CellType', 'Significant', 'Regulated',  'EffectSize','IncludeInModel')
   if ('class' %in% colnames(expt)) merge.by.cols <- c(merge.by.cols, "class")
-  
   merged <- Reduce(function(x, y) merge(x, y, by = merge.by.cols, all=TRUE), merged.list)
   write.table(merged, file.path(outdir, "expt.pred.txt"), sep = "\t", quote = F, col.names = T, row.names = F)
   return(merged)
@@ -97,7 +96,7 @@ combineSingleExptPred <- function(expt, pred, pred.name, config, cellMapping, ou
   #Sometimes a perturbed element will overlap multiple model elements (eg in the case of a large deletion)
   #In these cases need to summarize, Eg sum ABC.Score across model elements overlapping the deletion
   #This requires a config file describing how each prediction column should be aggregated
-  agg.cols <- c("chrPerturbationTarget","startPerturbationTarget","endPerturbationTarget","GeneSymbol","startTSS","endTSS","CellType","Significant","Regulated","EffectSize",'IncludeInModel') #"class",
+  agg.cols <- c("chrPerturbationTarget","startPerturbationTarget","endPerturbationTarget","GeneSymbol", "CellType","Significant","Regulated","EffectSize",'IncludeInModel') #"class",
   merged <- collapseEnhancersOverlappingMultiplePredictions(merged, config, agg.cols)
 
   #Experimental data missing predictions
@@ -112,7 +111,7 @@ combineSingleExptPred <- function(expt, pred, pred.name, config, cellMapping, ou
   #print(expt.missing.predictions[, ..agg.cols])
   if (fill.missing) {
     expt.missing.predictions <- fillMissingPredictions(expt.missing.predictions, config, agg.cols)
-    cols.we.want <- c(agg.cols, config$pred.col) #'class'
+    cols.we.want <- c(agg.cols, config$pred.col) #class
     merged <- rbind(merged, expt.missing.predictions[, ..cols.we.want], fill=TRUE)
     print("Experimental data missing predictions filled. Will be considered in PR curve!")
     print(expt.missing.predictions[, ..cols.we.want])
@@ -433,6 +432,7 @@ loadPredictions <- function(pred.table) {
     print(paste0("Dataset loaded with ", nrow(df), " rows"))
     return(df)
     })
+  print(names(pred.list))
   names(pred.list) <- pred.table$name
   return(pred.list)
 }

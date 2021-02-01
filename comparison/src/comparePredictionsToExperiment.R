@@ -110,7 +110,7 @@ merged <- subset(merged, IncludeInModel)
 #This is useful when evaluating the distance predictor in the case when a tested element is not considered a candidate element by the ABC model
 #In such a case there is no way to get the distance predictor for this connection
 #TO DO: Figure out a better way to handle this.
-merged$hardcode.distance <- with(merged, abs((startPerturbationTarget + endPerturbationTarget)/2 - (startTSS + endTSS)/2))
+merged$hardcode.distance <- merged[,grep("distance", colnames(merged))[0]]#with(merged, abs((startPerturbationTarget + endPerturbationTarget)/2 - (startTSS + endTSS)/2))
 
 inverse.predictors <- c(getInversePredictors(pred.list, predConfig), "hardcode.distance")
 
