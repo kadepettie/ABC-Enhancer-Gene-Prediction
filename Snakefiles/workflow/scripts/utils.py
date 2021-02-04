@@ -129,9 +129,21 @@ def getExperimentsCombined(args,metadata, biosample_entries):
     return to_combine, df
 
 def save_metadata(args, duplicates, prefix): 
-    duplicates.to_csv(os.path.join(args.outdir, "{}_metadata.tsv".format(prefix)), sep="\t", index=False)
+    # drop na 
+    duplicates = duplicates.dropna(how='all', axis=1)
+    # rearrange columns in duplicates
+    duplicates['unique_id'] = [str(i)+"_"+str(l)+"_"+str(j)+"_"+str(k)+"_"+str(m)+"_"+str(n) for i,l,j,k,m,n in zip(duplicates['Biosample summary_Accessibility'], duplicates['Biosample age_Accessibility'], duplicates['Technical replicate(s)_Accessibility'], duplicates['Biosample summary_H3K27ac'], duplicates['Biosample age_H3K27ac'], duplicates['Technical replicate(s)_H3K27ac'])]
+    duplicates['treatment_id'] = [str(i)+"_"+str(l)+"_"+str(j) for i,l,j in zip(duplicates['Biosample treatments'], duplicates['Biosample treatments amount'], duplicates['Biosample treatments duration'])]
+    duplicates['numerical_id'] = ["ID_"+str(i) for i in range(0, len(duplicates))]
+    # re-arrange columns 
+    cols = list(duplicates.columns)
+    col = ['numerical_id', 'unique_id', 'treatment_id']
+    for x in cols:
+        if x not in col:
+            col.append(x)
+    duplicates[col].to_csv(os.path.join(args.outdir, "{}_metadata.tsv".format(prefix)), sep="\t", index=False)
     # grab celltypes with biological replicates
-    df_biological =  duplicates.loc[duplicates.duplicated(['Biosample term name'], keep=False)]
+    df_biological =  duplicates[col].loc[duplicates[col].duplicated(['Biosample term name'], keep=False)]
     df_biological.to_csv(os.path.join(args.outdir, "{}_Replicates_metadata.tsv".format(prefix)), sep="\t", index=False)
 
 # This function grabs the samples that have paired ends for paired end bam processing 
