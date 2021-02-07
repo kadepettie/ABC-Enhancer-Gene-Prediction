@@ -134,6 +134,7 @@ def save_metadata(args, duplicates, prefix):
     # rearrange columns in duplicates
     duplicates['unique_id'] = [str(i)+"_"+str(l)+"_"+str(j)+"_"+str(k)+"_"+str(m)+"_"+str(n) for i,l,j,k,m,n in zip(duplicates['Biosample summary_Accessibility'], duplicates['Biosample age_Accessibility'], duplicates['Technical replicate(s)_Accessibility'], duplicates['Biosample summary_H3K27ac'], duplicates['Biosample age_H3K27ac'], duplicates['Technical replicate(s)_H3K27ac'])]
     duplicates['treatment_id'] = [str(i)+"_"+str(l)+"_"+str(j) for i,l,j in zip(duplicates['Biosample treatments'], duplicates['Biosample treatments amount'], duplicates['Biosample treatments duration'])]
+    duplicates['unique_id'] = [str(i).replace(" ", "_") for i in duplicates['unique_id']]
     duplicates['numerical_id'] = ["ID_"+str(i) for i in range(0, len(duplicates))]
     # re-arrange columns 
     cols = list(duplicates.columns)
