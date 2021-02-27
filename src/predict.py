@@ -23,6 +23,7 @@ def get_model_argument_parser():
     parser.add_argument('--score_column', default='ABC.Score', help="Column name of score to use for thresholding")
     parser.add_argument('--threshold', type=float, required=True, default=.022, help="Threshold on ABC Score (--score_column) to call a predicted positive")
     parser.add_argument('--cellType', help="Name of cell type")
+    parser.add_argument('--chrom_sizes', help="Chromosome sizes file")
 
     #hic
     #To do: validate params
@@ -89,6 +90,7 @@ def main():
     pred_file_bedpe = os.path.join(args.outdir, "EnhancerPredictions.bedpe")
     all_pred_file_expressed = os.path.join(args.outdir, "EnhancerPredictionsAllPutative.txt.gz")
     all_pred_file_nonexpressed = os.path.join(args.outdir, "EnhancerPredictionsAllPutativeNonExpressedGenes.txt.gz")
+    variant_overlap_file = os.path.join(args.outdir, "EnhancerPredictionsAllPutative.ForVariantOverlap.shrunk150bp.txt.gz")
     all_putative_list = []
 
     #Make predictions
@@ -130,7 +132,7 @@ def main():
     
     make_gene_prediction_stats(all_putative, args)
     write_connections_bedpe_format(all_positive, pred_file_bedpe, args.score_column)
-
+    
     if args.make_all_putative:
         if not args.use_hdf5:
             all_putative.loc[all_putative.TargetGeneIsExpressed,:].to_csv(all_pred_file_expressed, sep="\t", index=False, header=True, compression="gzip", float_format="%.6f", na_rep="NaN")
@@ -140,7 +142,9 @@ def main():
             all_pred_file_nonexpressed = os.path.join(args.outdir, "EnhancerPredictionsAllPutativeNonExpressedGenes.h5")
             all_putative.loc[all_putative.TargetGeneIsExpressed,:].to_hdf(all_pred_file_expressed, key='predictions', complevel=9, mode='w')
             all_putative.loc[~all_putative.TargetGeneIsExpressed,:].to_hdf(all_pred_file_nonexpressed, key='predictions', complevel=9, mode='w')
-            
+   
+    test_variant_overlap(args, all_putative)
+
     print("Done.")
     
 def validate_args(args):
