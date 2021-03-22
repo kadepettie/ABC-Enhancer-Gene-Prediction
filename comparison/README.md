@@ -38,9 +38,17 @@ caTools (1.17.1)
   * <https://docs.google.com/spreadsheets/d/1BQBFC4PzPA8v3tA_OkSp2lU1YpO74uwmkEa2TJTt-ic/edit#gid=0>
   * See example/input/K562.ABC.Predictions.AvgHiC.chrX.ENCODE.format.txt.gz for example. 
 
+## Configuring predictions table 
+Feed in predictions to the comparison code via example/input/pred.table.txt 
+Each row should correspond to a new predictor 
+
+* name : Name of predictor 
+* path : path to predictions 
+* threshold : Score used to define significant links in prediction method (i.e for ABC, this is 0.015)
+
 ## Configuring predictions
 
-Each predictor must have a corresponding entry in the predConfig file. The behavior of the comparison code for this predictor depends on:
+Each predictor must have a corresponding entry in the predConfig file (pred.config.txt). The behavior of the comparison code for this predictor depends on:
  
  * pred.col: must match the name of the column in the predictions file
  * agg.func: In the case that an experimentally tested element overlaps multiple predicted elements, how should the predicted elements be aggregated to the level of the tested element. 
@@ -48,7 +56,7 @@ Each predictor must have a corresponding entry in the predConfig file. The behav
  * lowerIsMoreConfident: Set to TRUE if lower values of the predictor signify more confidence in the prediction. This is appropraite for predictors such as linear distance or pvalue. It is generally preferred for this column to be FALSE.
 
 ## Configuring Plotting
-Each row of this file denotes a separate PR curve plot. Each predictor should be of the form: {DATASETNAME}.{SCORECOLUMN}
+Each row of this file denotes a separate PR curve plot (plot.config.txt). Each predictor should be of the form: {DATASETNAME}.{SCORECOLUMN}
 
 ## Sample command
 ```
@@ -56,8 +64,8 @@ Rscript src/comparePredictionsToExperiment.R \
 --predictions example/input/pred.table.txt \
 --experimentalData example/input/K562.ExperimentalData.slim.txt \
 --experimentalPositiveColumn "Regulated" \
---plotConfig src/plot.config.txt \
---predConfig src/pred.config.txt \
+--plotConfig CRISPR/plot.config.txt \
+--predConfig CRISPR/pred.config.txt \
 --code src/comparison.R \
 --outDir example/out
 
