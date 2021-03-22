@@ -63,13 +63,14 @@ checkExistenceOfExperimentalGenesInPredictions <- function(expt, pred.list, outd
 combineAllExptPred <- function(expt, pred.list, config, cellMapping, outdir, fill.missing) {
   merged.list <- lapply(names(pred.list), function(s) combineSingleExptPred(expt = expt, 
                                                                             pred = pred.list[[s]], 
-                                                                            pred.name = s, 
+                                                                            #threshold = threshold[[s]],
+									    pred.name = s, 
                                                                             config = config, 
                                                                             cellMapping = cellMapping, 
                                                                             outdir = outdir, 
                                                                             fill.missing = fill.missing))
   merge.by.cols <- c('chrPerturbationTarget', 'startPerturbationTarget', 
-                     'endPerturbationTarget', 'GeneSymbol', 'CellType', 'Significant', 'Regulated',  'EffectSize','IncludeInModel')
+                     'endPerturbationTarget', 'GeneSymbol', 'CellType', 'Significant', 'Regulated',  'EffectSize','IncludeInModel', 'startTSS', 'endTSS')#, 'TargetGeneTSS')
   if ('class' %in% colnames(expt)) merge.by.cols <- c(merge.by.cols, "class")
   merged <- Reduce(function(x, y) merge(x, y, by = merge.by.cols, all=TRUE), merged.list)
   write.table(merged, file.path(outdir, "expt.pred.txt"), sep = "\t", quote = F, col.names = T, row.names = F)
@@ -81,24 +82,26 @@ combineSingleExptPred <- function(expt, pred, pred.name, config, cellMapping, ou
   print(paste0("Overlapping predictions for predictor: ", pred.name))
   config <- subset(config, pred.col %in% colnames(pred))
 
-  
+   
   if (opt$cellNameMapping != "") pred <- applyCellTypeNameMapping(pred, cellMapping)
   # pred <- subset(pred, CellType %in% c("K562","BLD.K562.CNCR"))
   # pred$CellType <- "K562"
-  
   pred.gr <- with(pred, GRanges(paste0(CellType,":",chrElement,":",GeneSymbol), IRanges(startElement, endElement)))
   expt.gr <- with(expt, GRanges(paste0(CellType,":",chrPerturbationTarget,":",GeneSymbol), IRanges(startPerturbationTarget, endPerturbationTarget)))
   ovl <- GenomicRanges::findOverlaps(expt.gr, pred.gr)
   
   #Merge predictions with experimental data
   merged <- cbind(expt[queryHits(ovl)], pred[subjectHits(ovl), config$pred.col, with = F])
-  
+   
   #Sometimes a perturbed element will overlap multiple model elements (eg in the case of a large deletion)
   #In these cases need to summarize, Eg sum ABC.Score across model elements overlapping the deletion
   #This requires a config file describing how each prediction column should be aggregated
-  agg.cols <- c("chrPerturbationTarget","startPerturbationTarget","endPerturbationTarget","GeneSymbol", "CellType","Significant","Regulated","EffectSize",'IncludeInModel') #"class",
+  agg.cols <- c("chrPerturbationTarget","startPerturbationTarget","endPerturbationTarget","GeneSymbol", "CellType","Significant","Regulated","EffectSize",'IncludeInModel', 'startTSS', 'endTSS')#, 'TargetGeneTSS') #"class",
+  #write.table(merged, file=paste(pred.name, ".merged.tsv"))
   merged <- collapseEnhancersOverlappingMultiplePredictions(merged, config, agg.cols)
-
+  #write.table(merged, file=paste(pred.name, ".merged.collapseEnhancers.tsv"))
+  #colname <- colnames(merged)[grep("Score",colnames(merged))]
+  merged$Prediction <- 1
   #Experimental data missing predictions
   #A tested enhancer element may not have a prediction
   #For ABC this is typically the case if the tested element does not overlap a DHS peak.
@@ -107,22 +110,32 @@ combineSingleExptPred <- function(expt, pred, pred.name, config, cellMapping, ou
   dir.create(file.path(outdir, "experimentalDataMissingPredictions", pred.name), recursive = TRUE)
   write.table(expt.missing.predictions, file.path(outdir, "experimentalDataMissingPredictions", pred.name, "expt.missing.predictions.txt"), sep="\t", quote=F, col.names=T, row.names=F)
 
+  abc_colname <- colnames(merged)[grep("Score", colnames(merged))]
+  merged[[paste0(abc_colname,'.Prediction')]] <- merged[[abc_colname]]*merged$Prediction
+  
   #print("The following experimental data is not present in predictions file: ")
   #print(expt.missing.predictions[, ..agg.cols])
+  print("fill missing...")
   if (fill.missing) {
     expt.missing.predictions <- fillMissingPredictions(expt.missing.predictions, config, agg.cols)
-    cols.we.want <- c(agg.cols, config$pred.col) #class
+    print("Prediction")
+    cols.we.want <- c(agg.cols, config$pred.col, "Prediction") 
+    print("Fill missing pred")
+    expt.missing.predictions$Prediction <- 0
+    print("Bind")
     merged <- rbind(merged, expt.missing.predictions[, ..cols.we.want], fill=TRUE)
     print("Experimental data missing predictions filled. Will be considered in PR curve!")
-    print(expt.missing.predictions[, ..cols.we.want])
   } else {
     print("Experimental data missing predictions ignored. Will not be considered in PR curve!")
-    print(expt.missing.predictions)
   }
 
   #Rename new columns based on prediction dataset name
   colnames(merged)[colnames(merged) %in% config$pred.col] <- paste0(pred.name, ".", colnames(merged)[colnames(merged) %in% config$pred.col])
-  
+  # Get distance for predictions that overlap experiments
+  dist_colname <- colnames(merged)[grep("distance", colnames(merged))]
+  merged[[paste0(dist_colname,'.Prediction')]] <- merged[[dist_colname]]*merged$Prediction
+  print("Done plotting hardcore distance")
+  #write.table(merged, file=paste(pred.name, ".merged.collapseEnhancers.final.tsv"))
   return(merged)
 }
 
@@ -178,35 +191,34 @@ prepForPlotting <- function(df) {
   return(df)
 }
 
-makePlots <- function(merged, config, inverse.predictors, pos.col, outdir, min.sensitivity = .7) {
+makePlots <- function(merged, config, inverse.predictors, pos.col, outdir, pred.table, min.sensitivity = .7) {
+  # colnames = colnames(merged)[grep("Score", colnames(merged))]
+  # lapply(merged, function(s) {merged[is.na(merged[s])] <- 0})
   #config <- fread(config)  
   pred.cols <- unique(unlist(lapply(config$pred.cols, function(s) {strsplit(s,",")[[1]]})))
   pred.cols <- intersect(pred.cols, colnames(merged))
-  
   #Make scatter plots
   lapply(pred.cols, function(s) {makeScatterPlot(merged, s, "EffectSize", outdir)})
   
   merged <- as.data.table(merged) #seems to be necessary to run in interactive session on compute node
-  
+   
   #Hack for predictors where lower values are more confident (eg genomic distance, pvalue)
-  #Multiply these by -1
+  #Multiply these by -
   inverse.predictors <- intersect(inverse.predictors, colnames(merged))
   
   if (length(inverse.predictors) > 0) merged[, inverse.predictors] <- -1*merged[, ..inverse.predictors]
-
   #Compute performance objects
   pr <- sapply(pred.cols, 
                function(s) {performance(prediction(as.numeric(unlist(merged[, ..s])), 
                                                    unlist(merged[, ..pos.col])), 
                                         measure="prec", x.measure="rec")})
   if (length(inverse.predictors) > 0) merged[, inverse.predictors] <- -1*merged[, ..inverse.predictors]
-
   pr.df <- pr2df(pr)
   pr.df$F1 <- with(pr.df, 2 / ((1/precision) + (1/recall)))
   write.table(pr.df, file.path(outdir, "pr.curve.txt"), sep = "\t", quote = F, col.names = T, row.names = F)
 
   #write PR summary table (AUC, cutoff, etc)
-  perf.summary <- makePRSummaryTable(pr, min.sensitivity, outdir)
+  perf.summary <- makePRSummaryTable(pr, min.sensitivity, pred.table, outdir)
 
   #Assign prediction class and write output
   merged <- addPredictionClassLabels(merged, perf.summary)
@@ -237,15 +249,19 @@ makeScatterPlot <- function(df, x.col, y.col, outdir) {
 makePRCurvePlot <- function(pr.df, plot.name, col.list, outdir, pct.pos) {
   col.list <- strsplit(as.character(col.list), ",")[[1]]
   pr.df <- subset(pr.df, pred.col %in% col.list)
-  
+
   #separate boolean predictors from continuous predictors
   pr.cutoff <- by(pr.df, pr.df$pred.col, function(df) unique(df$alpha))
   boolean.predictors <- names(pr.cutoff)[unlist(lapply(pr.cutoff, function(s) identical(s, c(Inf, 1, 0))), use.names=F)]
-  
+  print("Got pr.cutoff") 
   cont.pred <- subset(pr.df, !(pred.col %in% boolean.predictors))
   bool.pred <- subset(pr.df, pred.col %in% boolean.predictors)
   bool.pred <- subset(bool.pred, alpha == 1)
+  print("Got threshold.pred")
   
+  # get thresholded values
+  threshold.pred <- getPrecisionAtRecall(pr.df, col.list, min.sensitivity=0.7) 
+
   g <- ggplot(cont.pred,
            aes(x = recall,
                y = precision,
@@ -259,9 +275,21 @@ makePRCurvePlot <- function(pr.df, plot.name, col.list, outdir, pct.pos) {
     g <- g + geom_point(data = bool.pred,
                         size = 3)
   }
+  g <- g + geom_point(data = threshold.pred,
+		      size = 3)
       
   ggsave(file.path(outdir, paste0(plot.name, ".pr.pdf")), g, device = "pdf")
   ggsave(file.path(outdir, paste0(plot.name, ".pr.eps")), g, device = "eps")
+}
+
+getPrecisionAtRecall <- function(pr.df, col.list, min.sensitivity=0.7){
+  thresholds <- data.frame(matrix(ncol=3, nrow=length(col.list)))
+  colnames(thresholds) <- c("precision", "recall", "pred.col")
+  thresholds$pred.col = col.list
+  thresholds$recall = min.sensitivity
+  prec <- lapply(col.list ,function(s) approxfun(as.numeric(unlist(pr.df[pr.df$pred.col==s, "recall"])), as.numeric(unlist(pr.df[pr.df$pred.col==s, "precision"])))(min.sensitivity))
+  thresholds$precision = as.numeric(unlist(prec))
+  return(thresholds)
 }
 
 pr2df <- function(pr) {
@@ -285,7 +313,7 @@ pr2df <- function(pr) {
   return(rbindlist(pr.list))
 }
 
-makePRSummaryTable <- function(pr, min.sensitivity = .7, outdir) {
+makePRSummaryTable <- function(pr, min.sensitivity = .7, pred.table, outdir) {
   
   #compute AUC
   #the head() calls here remove the last element of the vector. 
@@ -293,21 +321,34 @@ makePRSummaryTable <- function(pr, min.sensitivity = .7, outdir) {
   #This results in a straight line ending at (1,0) on the PR curve. This should not be included in the AUC computation.
   auc <- lapply(pr, function(s) computeAUC(head(s@x.values[[1]], -1), 
                                            head(s@y.values[[1]], -1))) 
+  
   cutoff <- lapply(pr, function(s) computeCutoffGivenDesiredSensitivity(s, min.sensitivity))
   max.F1 <- lapply(pr, function(s) max(2 / ((1/s@x.values[[1]]) + (1/s@y.values[[1]])), na.rm = T))
 
   perf.summary <- rbindlist(list(cutoff = as.list(as.numeric(cutoff)), 
                                  AUC = as.list(as.numeric(auc)),
                                  maxF1 = as.list(as.numeric(max.F1))))
-
   perf.summary <- t(perf.summary)
   perf.summary <- as.data.table(cbind(names(pr), min.sensitivity, perf.summary))
   colnames(perf.summary) <- c("predictor", "min.sensitivity", "cutoff", "AUPRC","maxF1")
-
+  
+  for (name in list(pred.table$name)){
+    col.name <- perf.summary$predictor[grepl(paste0(name), perf.summary$predictor) & grepl("Score", perf.summary$predictor)]
+    print(col.name)
+    if (!is.na(pred.table[pred.table$name==name, "threshold"])){
+        perf.summary[perf.summary$predictor==col.name, "cutoff"] <- getThresholdValue(pred.table, name)
+    }
+  }
+  
   write.table(perf.summary, file.path(outdir, "pr.summary.txt"), sep='\t', quote = F, row.names = F, col.names = T)
 
   return(perf.summary)
 }
+
+getThresholdValue <- function(pred.table, name){
+  thres <- pred.table[pred.table$name==name, "threshold"]
+  return(thres)
+  }
 
 computeAUC <- function(x.vals, y.vals) {
   good.idx <- which(!is.na(x.vals) & !is.na(y.vals))
@@ -425,7 +466,6 @@ loadFileString <- function(file.str, delim = ",") {
 }
 
 loadPredictions <- function(pred.table) {
-  #df <- fread(pred.table)
   pred.list <- lapply(pred.table$path, function(s) {
     print(paste0("Loading dataset: ", s))
     df = loadFileString(s)
@@ -435,4 +475,11 @@ loadPredictions <- function(pred.table) {
   print(names(pred.list))
   names(pred.list) <- pred.table$name
   return(pred.list)
+}
+
+getThresholds <- function(pred.table) {
+   thresholds <- data.frame(matrix(ncol=nrow(pred.table), nrow=1))
+   colnames(thresholds) <- pred.table$name
+   thresholds[1, ] <- pred.table$threshold
+   return(thresholds)
 }

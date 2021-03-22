@@ -1,4 +1,4 @@
-name	path
-K562_K562HiC	/users/kmualim/updated_ABC/github/ABC-Enhancer-Gene-Prediction/comparison/example/input/K562.ABC.Predictions.K562HiC.chrX.ENCODE.format.txt.gz
+name	path	threshold
+K562_K562HiC	/users/kmualim/updated_ABC/github/ABC-Enhancer-Gene-Prediction/comparison/example/input/K562.ABC.Predictions.K562HiC.chrX.ENCODE.format.txt.gz	0.015
 K562_AvgHiC	/users/kmualim/updated_ABC/github/ABC-Enhancer-Gene-Prediction/comparison/example/input/K562.ABC.Predictions.AvgHiC.chrX.ENCODE.format.txt.gz
 

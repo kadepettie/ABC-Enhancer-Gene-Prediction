@@ -42,7 +42,7 @@ suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(caTools))
 
 option.list <- list(
-  make_option("--predictions", type="character", help="Predictions table"),
+  make_option("--predictions", type="character", help="Predictions table; these predictions should encompass the full list of E-G pairs, even the ones that aren't considered significant by your model"),
   make_option("--experimentalData", type="character", help="File listing perturbational data (accepts comma delimited list)"),
   make_option("--experimentalPositiveColumn", type="character", default="Regulated", help="Column of experimentalData to consider an experimental positive or negative"),
   make_option("--plotConfig", type="character", help="File describing which plots to make"),
@@ -83,8 +83,10 @@ print(predConfig)
 expt <- loadFileString(opt$experimentalData)
 print(paste0("Loaded experimental data with ", nrow(expt), " rows"))
 
+
 print("Reading input files")
 pred.table <- fread(opt$predictions)
+#threshold.table <- getThresholds(pred.table)
 pred.list <- loadPredictions(pred.table)
 
 #QC Input Files
@@ -98,6 +100,7 @@ checkExistenceOfExperimentalGenesInPredictions(expt, pred.list, opt$outDir)
 print("Merging experiment and predictions")
 merged <- combineAllExptPred(expt = expt, 
                             pred.list = pred.list,
+			    #threshold = threshold.table,
                             config = predConfig,
                             cellMapping = cellMapping, 
                             outdir = opt$outDir,
@@ -105,14 +108,16 @@ merged <- combineAllExptPred(expt = expt,
 
 writeExptSummary(merged, opt$outDir)
 merged <- subset(merged, IncludeInModel)
-
 #Hardcode distance
 #This is useful when evaluating the distance predictor in the case when a tested element is not considered a candidate element by the ABC model
 #In such a case there is no way to get the distance predictor for this connection
 #TO DO: Figure out a better way to handle this.
-merged$hardcode.distance <- merged[,grep("distance", colnames(merged))[0]]#with(merged, abs((startPerturbationTarget + endPerturbationTarget)/2 - (startTSS + endTSS)/2))
-
-inverse.predictors <- c(getInversePredictors(pred.list, predConfig), "hardcode.distance")
+#write.table(merged, file="merged.tsv")
+print("Plotting hardcore distance")
+merged$distance <- with(merged, abs((startPerturbationTarget + endPerturbationTarget)/2 - (startTSS + endTSS)/2))
+#merged[,grep("distance", colnames(merged))[0]]#with(merged, abs((startPerturbationTarget + endPerturbationTarget)/2 - (startTSS + endTSS)/2))
+colnames <- colnames(merged)[grep("distance", colnames(merged))]
+inverse.predictors <- c(getInversePredictors(pred.list, predConfig), "distance", paste(colnames, "Prediction", sep = "."))
 
 plotCellType <- function(cellType) {
 
@@ -127,7 +132,7 @@ plotCellType <- function(cellType) {
       print(paste0("Making plots for celltype ", cellType))
       this.merged <- prepForPlotting(this.merged)
       dir.create(file.path(opt$outDir, cellType))
-      makePlots(this.merged, plotConfig, inverse.predictors, opt$experimentalPositiveColumn, file.path(opt$outDir, cellType))
+      makePlots(this.merged, plotConfig, inverse.predictors, opt$experimentalPositiveColumn, file.path(opt$outDir, cellType), pred.table)
       }, error = function(e) {
         print(e)
       })
