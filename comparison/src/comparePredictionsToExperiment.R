@@ -86,7 +86,7 @@ print(paste0("Loaded experimental data with ", nrow(expt), " rows"))
 
 print("Reading input files")
 pred.table <- fread(opt$predictions)
-#threshold.table <- getThresholds(pred.table)
+isEnhancerBed <- getThresholds(pred.table)
 pred.list <- loadPredictions(pred.table)
 
 #QC Input Files
@@ -100,11 +100,11 @@ checkExistenceOfExperimentalGenesInPredictions(expt, pred.list, opt$outDir)
 print("Merging experiment and predictions")
 merged <- combineAllExptPred(expt = expt, 
                             pred.list = pred.list,
-			    #threshold = threshold.table,
                             config = predConfig,
                             cellMapping = cellMapping, 
                             outdir = opt$outDir,
-                            fill.missing = !opt$ignoreExptMissingPredictions)
+                            fill.missing = !opt$ignoreExptMissingPredictions,
+			    enhancerBed = isEnhancerBed)
 
 writeExptSummary(merged, opt$outDir)
 merged <- subset(merged, IncludeInModel)
