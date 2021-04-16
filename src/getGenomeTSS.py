@@ -30,7 +30,7 @@ def read_tss_file(tss_file):
     """
     Reads in TSS File
     """
-    tss_df = pd.read_csv(args.tss_file, sep="\t", names=['chr', 'start', 'end', 'TargetGeneTSS', 'score', 'strand', 'start_Gene', 'end_Gene', 'TargetGene'])
+    tss_df = pd.read_csv(args.tss_file, sep="\t", names=['chr', 'start', 'end', 'TargetGeneTSS', 'score', 'strand', 'start_Gene', 'end_Gene', 'TargetGene','Collapsed_GeneIDs'])
     return tss_df
 
 def create_dataframes(data, len_):
@@ -49,32 +49,35 @@ def filter_promoters_by_distance(promoters):
     IF promoter start sites are 500bp from each other, otherwise, return top promoter
     """
     # ensure that promoters are at least 500bp apart
-    top_promoter = promoters.iloc[0, :]
+    top_promoter = promoters.iloc[[0]]
     # if no promoter isoform exists within 500bp, just pick top promoter 
     # for now, use the distance between the promoter TSS 
-    start = top_promoter[1]
-    try:
-        temp = promoters.iloc[1:, :]
-        temp['dist'] = temp[2] - start
-        index = temp.loc[temp['dist'] >= 500].index.astype('int')
-        second_promoter = temp.loc[index[0], :]
-        concatenated_top_promoters = pd.concat([top_promoter, second_promoter])
-        top_promoter = filter_promoters_by_activity(concatenated_top_promoters)
-        return top_promoter
-    except:
+    start = top_promoter['start'].values[0]
+    if len(promoters.iloc[1:, :]) > 0:
+        promoters['dist'] = promoters['start'] - start
+        index = promoters.loc[np.abs(promoters['dist']) >= 500].index.astype('int')
+        print("Index: ", index)
+        if len(index) > 0:
+            second_promoter = promoters.loc[[index[0]]]
+            concatenated_top_promoters = pd.concat([top_promoter, second_promoter])
+            top_promoter = filter_promoters_by_activity(concatenated_top_promoters)
+            return top_promoter
+        else:
+            return top_promoter
+    else:
         return top_promoter
 
 def filter_promoters_by_activity(promoters):
-    activities = promoters['PromoterActivityQuantile']
-    activity_foldchange = activities[1]/activities[0]
-    if activity_foldchange > 0.8: 
+    activities = promoters['PromoterActivityQuantile'].sort_values(ascending=False)
+    activity_foldchange = activities.iloc[[1]].values[0]/activities.iloc[[0]].values[0]
+    if activity_foldchange > 0.5: 
         return promoters 
     else:
-        return promoters.iloc[0, :]
+        return promoters.iloc[[0]] 
 
 def filter_expressed_df(expressed_tsscounts):
     gene_tss_df = None
-    for gene in expressed_tsscounts['TargetGene']:
+    for gene in expressed_tsscounts['TargetGene'].drop_duplicates():
         tss1kb_file_subset = expressed_tsscounts.loc[expressed_tsscounts['TargetGene']==gene]
         sorted_tss1kb_file_subset = tss1kb_file_subset.sort_values(by=['PromoterActivityQuantile'], ascending=False)
         # ensure that distances between promoters are at least 500bp from each other
@@ -87,7 +90,7 @@ def filter_expressed_df(expressed_tsscounts):
 
 def filter_nonexpressed_df(nonexpressed):
     final_df = None
-    for gene in nonexpressed['TargetGene']:
+    for gene in nonexpressed['TargetGene'].drop_duplicates():
         matched = nonexpressed['PromoterActivityQuantile'].loc[nonexpressed['TargetGene'].str.contains(str(gene).split("-")[0])]
         max_index = np.sort(matched).index.astype('int')
         max_match = nonexpressed.iloc[max_index, :]
@@ -99,7 +102,7 @@ def filter_nonexpressed_df(nonexpressed):
 
 def process_genome_tss(args):
     """
-    Takes in ENSEMBL Gene List and outputs 1/2 Promoter Isoforms for each gene 
+    Takes in ENSEMBL Gene List and outputs 1/2 Gene Isoforms for each gene 
     Promoter_ID = {Gene_Name}_{PromoterChr:Start-End}
     """
     os.makedirs(os.path.join(args.outDir), exist_ok=True)
@@ -115,17 +118,11 @@ def process_genome_tss(args):
     outdir = args.outDir
 
     tsscounts = count_features_for_bed(tss_df, tss1kb_file, genome_sizes, features, outdir, "Genes.TSS1kb", force=True, use_fast_count=True)
-    for feature, feature_file in zip(feature_name, feature_files):
-        output_file = os.path.join(args.outDir,"{}.{}.CountReads.bedgraph".format(filebase, feature))
-        print("Taking in isoform TSS file and generating Counts")
-        # Take in isoform file and count reads 
-        tss_df_1 = count_single_feature_for_bed(tss_df, args.tss_file, args.chrom_sizes, feature_file, feature, args.outDir, "Genes.TSS1kb", skip_rpkm_quantile=False, force=False, use_fast_count=True)
+        
     chrom_sizes = args.chrom_sizes
     tss_file = args.tss_file
-    sort_command = "bedtools sort -faidx {chrom_sizes} -i {tss_file} > {tss_file}.sorted; mv {tss_file}.sorted {tss_file}".format(**locals())
-    run_command(sort_command)
+    
     print("Finished Sorting Gene TSS File")
-
     # Take top 2 promoters based on counts 
     tsscounts['PromoterActivityQuantile'] = ((0.0001+tsscounts['H3K27ac.RPKM.quantile'])*(0.0001+tsscounts['DHS.RPKM.quantile'])).rank(method='average', na_option="top", ascending=True, pct=True)
     print("Looping though all genes present to select out Top Two Promoters based on RPM")
@@ -134,34 +131,53 @@ def process_genome_tss(args):
     # This loop only needs to run on expressed genes
     expressed_tsscounts = tsscounts.loc[tsscounts['PromoterActivityQuantile']!=0.0]
     filtered_expressed_tsscounts = filter_expressed_df(expressed_tsscounts)
-
+    
     nonexpressed_dup = tsscounts.loc[tsscounts['PromoterActivityQuantile']==0.0]
-    # filter for single promoter entries 
+    # filter for single promotr entries 
     nonexpressed_unique = filter_nonexpressed_df(nonexpressed_dup)
     gene_tss_df = pd.concat([filtered_expressed_tsscounts, nonexpressed_unique])
-
+   
+    gene_tss_df.to_csv(os.path.join(args.outDir, "final.Gene_TSS.txt"), sep="\t", header=False, index=False)
     print("Saving Files")
-    gene_tss_df[['chr', 'start', 'end', 'TargetGeneTSS', 'score', 'strand']].to_csv("ENSEMBL_GeneTSS.txt.tmp", sep="\t", index=False, header=False)
-    gene_tss_df[['chr', 'start_Gene', 'end_Gene', 'TargetGene', 'score', 'strand']].to_csv("ENSEMBL_Genes.txt.tmp", sep="\t", index=False, header=False)
+    save_files(args, gene_tss_df)
+
+def save_files(args, gene_tss_df):
+    outdir = args.outDir
+    gene_tss_df['start'] = gene_tss_df['start'].astype('int')
+    gene_tss_df['end'] = gene_tss_df['end'].astype('int')
+    unique_tss_df = gene_tss_df.drop_duplicates()
+    unique_tss_df[['chr', 'start', 'end', 'TargetGeneTSS', 'score', 'strand', 'Collapsed_GeneIDs']].to_csv(os.path.join(outdir, "ENSEMBL_GeneTSS.txt.tmp"), sep="\t", index=False, header=False)
+    get_unique_gene_id(outdir, unique_tss_df) 
+
+def get_unique_gene_id(outdir, gene_tss_df):
+    gene_tss_df['TargetGene'] = [str(gene).split("_")[1] for gene in gene_tss_df['TargetGeneTSS']]
+    entries = gene_tss_df[['chr', 'TargetGene']].drop_duplicates()
+    for chr, gene in zip(entries['chr'], entries['TargetGene']):
+        matched = gene_tss_df.loc[(gene_tss_df['TargetGene']==gene)&(gene_tss_df['chr']==chr)]
+        indexlist = matched.index.astype('int')
+        if len(matched) > 1:
+            count=1
+            for index in indexlist:
+                gene_tss_df.loc[index, 'TargetGene'] = gene_tss_df.loc[index, 'TargetGene']+"_TSS_{}".format(count)
+                count+=1
+    gene_tss_df[['chr', 'start_Gene', 'end_Gene', 'TargetGene', 'score', 'strand', 'Collapsed_GeneIDs']].to_csv(os.path.join(outdir, "ENSEMBL_Genes.txt.tmp"), sep="\t", index=False, header=False)
 
 def concatenate_entries(args):
-    data = pd.read_csv("ENSEMBL_Genes.txt.tmp", sep="\t", header=None)
-    data_tss = pd.read_csv("ENSEMBL_GeneTSS.txt.tmp", sep="\t", header=None)
+    data = pd.read_csv(os.path.join(args.outDir,"ENSEMBL_Genes.txt.tmp"), sep="\t", header=None)
+    data_tss = pd.read_csv(os.path.join(args.outDir, "ENSEMBL_GeneTSS.txt.tmp"), sep="\t", header=None)
     print("Concatenating Entries for final output file")
-    len_ = len(data.loc[data[0].str.contains('chr')])
-    df = create_dataframes(data, len_)
-    df.to_csv(os.path.join(args.outDir, args.gene_outf), sep="\t", header=False, index=False)
-    df2 = create_dataframes(data_tss, len_)
-    df2.to_csv(os.path.join(args.outDir, args.genetss_outf), sep="\t", header=False, index=False)
+    data.to_csv(os.path.join(args.outDir, args.gene_outf), sep="\t", header=False, index=False)
+    data_tss.to_csv(os.path.join(args.outDir, args.genetss_outf), sep="\t", header=False, index=False)
     
 def clean_up():
     print("Removing tmp files created during run")
-    os.remove("ENSEMBL_GeneTSS.txt.tmp")
-    os.remove("ENSEMBL_Genes.txt.tmp")
+    os.remove(os.path.join(args.outDir,"ENSEMBL_GeneTSS.txt.tmp"))
+    os.remove(os.path.join(args.outDir,"ENSEMBL_Genes.txt.tmp"))
     print("Done!")
 
 if __name__=="__main__":
     args = parseargs()
+    outdir = args.outDir
     process_genome_tss(args)
     concatenate_entries(args)
     clean_up()
