@@ -1,0 +1,282 @@
+{
+    "stomach_female_fetal_96-98_days":{
+        "File accession_Accessibility bam":"ENCFF148JEQ.bam",
+        "File accession_H3K27ac bam":"ENCFF386QCT.bam"
+    },
+    "neural_progenitor_cell_derived_from_H9":{
+        "File accession_Accessibility bam":"ENCFF607OCD.bam",
+        "File accession_H3K27ac bam":"ENCFF564EPQ.bam"
+    },
+    "MCF7":{
+        "File accession_Accessibility bam":"ENCFF502OCP.bam",
+        "File accession_H3K27ac bam":"ENCFF855RCK.bam"
+    },
+    "H1":{
+        "File accession_Accessibility bam":"ENCFF923SKV.bam",
+        "File accession_H3K27ac bam":"ENCFF948TVI.bam"
+    },
+    "natural_killer_cell_male_adult_37_years":{
+        "File accession_Accessibility bam":"ENCFF068IAM.bam",
+        "File accession_H3K27ac bam":"ENCFF593IAM.bam"
+    },
+    "foreskin_fibroblast_male_newborn":{
+        "File accession_Accessibility bam":"ENCFF193MMR.bam",
+        "File accession_H3K27ac bam":"ENCFF277NDF.bam"
+    },
+    "osteoblast":{
+        "File accession_Accessibility bam":"ENCFF933ZOD.bam",
+        "File accession_H3K27ac bam":"ENCFF535AIK.bam"
+    },
+    "T-cell_male_adult_37_years":{
+        "File accession_Accessibility bam":"ENCFF070VVE.bam",
+        "File accession_H3K27ac bam":"ENCFF470HNQ.bam"
+    },
+    "myotube":{
+        "File accession_Accessibility bam":"ENCFF535CKI.bam",
+        "File accession_H3K27ac bam":"ENCFF455ITO.bam"
+    },
+    "neuronal_stem_cell":{
+        "File accession_Accessibility bam":"ENCFF991GGR.bam",
+        "File accession_H3K27ac bam":"ENCFF303LNR.bam"
+    },
+    "right_atrium_auricular_region_female_adult":{
+        "File accession_Accessibility bam":"ENCFF513LVE.bam",
+        "File accession_H3K27ac bam":"ENCFF850MQA.bam"
+    },
+    "testis_male_adult":{
+        "File accession_Accessibility bam":"ENCFF066TTB.bam",
+        "File accession_H3K27ac bam":"ENCFF530VND.bam"
+    },
+    "iPSDF19.11":{
+        "File accession_Accessibility bam":"ENCFF052FAL.bam",
+        "File accession_H3K27ac bam":"ENCFF637QJT.bam"
+    },
+    "esophagus_squamous_epithelium_male_adult":{
+        "File accession_Accessibility bam":"ENCFF542ZZY.bam",
+        "File accession_H3K27ac bam":"ENCFF347NVE.bam"
+    },
+    "trophoblast_cell_male_embryo":{
+        "File accession_Accessibility bam":"ENCFF391ZRU.bam",
+        "File accession_H3K27ac bam":"ENCFF794OWI.bam"
+    },
+    "HCT116":{
+        "File accession_Accessibility bam":"ENCFF291HHS.bam",
+        "File accession_H3K27ac bam":"ENCFF364PAM.bam"
+    },
+    "neural_progenitor":{
+        "File accession_Accessibility bam":"ENCFF607OCD.bam",
+        "File accession_H3K27ac bam":"ENCFF508UMT.bam"
+    },
+    "adrenal_gland_male_fetal_96-97_days":{
+        "File accession_Accessibility bam":"ENCFF349QPC.bam",
+        "File accession_H3K27ac bam":"ENCFF639QXV.bam"
+    },
+    "common_myeloid_progenitor_CD34+_female":{
+        "File accession_Accessibility bam":"ENCFF134NUT.bam",
+        "File accession_H3K27ac bam":"ENCFF374OLB.bam"
+    },
+    "left_lung":{
+        "File accession_Accessibility bam":"ENCFF022PJN.bam",
+        "File accession_H3K27ac bam":"ENCFF152QOQ.bam"
+    },
+    "OCILY7":{
+        "File accession_Accessibility bam":"ENCFF906KZN.bam",
+        "File accession_H3K27ac bam":"ENCFF549QTQ.bam"
+    },
+    "H9":{
+        "File accession_Accessibility bam":"ENCFF854QWS.bam",
+        "File accession_H3K27ac bam":"ENCFF775ONB.bam"
+    },
+    "stomach_male_adult_34_years":{
+        "File accession_Accessibility bam":"ENCFF512AWR.bam",
+        "File accession_H3K27ac bam":"ENCFF107IFK.bam"
+    },
+    "muscle_of_leg_female_fetal_110-113_days":{
+        "File accession_Accessibility bam":"ENCFF032YRW.bam",
+        "File accession_H3K27ac bam":"ENCFF715SUA.bam"
+    },
+    "HeLaS3":{
+        "File accession_Accessibility bam":"ENCFF867ALU.bam",
+        "File accession_H3K27ac bam":"ENCFF093KYN.bam"
+    },
+    "small_intestine_male_fetal_108_days":{
+        "File accession_Accessibility bam":"ENCFF796LQN.bam",
+        "File accession_H3K27ac bam":"ENCFF618QIM.bam"
+    },
+    "muscle_of_trunk_female_fetal_113-115_days":{
+        "File accession_Accessibility bam":"ENCFF863QYT.bam",
+        "File accession_H3K27ac bam":"ENCFF994MOQ.bam"
+    },
+    "adrenal_gland":{
+        "File accession_Accessibility bam":"ENCFF970LXV.bam",
+        "File accession_H3K27ac bam":"ENCFF070MRW.bam"
+    },
+    "coronary_artery":{
+        "File accession_Accessibility bam":"ENCFF920WJT.bam",
+        "File accession_H3K27ac bam":"ENCFF226TTG.bam"
+    },
+    "vagina":{
+        "File accession_Accessibility bam":"ENCFF243NYB.bam",
+        "File accession_H3K27ac bam":"ENCFF542EXN.bam"
+    },
+    "esophagus_squamous_epithelium":{
+        "File accession_Accessibility bam":"ENCFF542ZZY.bam",
+        "File accession_H3K27ac bam":"ENCFF562NOM.bam"
+    },
+    "Peyers_patch_male_adult":{
+        "File accession_Accessibility bam":"ENCFF474HAC.bam",
+        "File accession_H3K27ac bam":"ENCFF739WLH.bam"
+    },
+    "Hepatocyte":{
+        "File accession_Accessibility bam":"ENCFF130KHK.bam",
+        "File accession_H3K27ac bam":"ENCFF998QZR.bam"
+    },
+    "placenta_female_fetal_108-113_days":{
+        "File accession_Accessibility bam":"ENCFF412UIS.bam",
+        "File accession_H3K27ac bam":"ENCFF191ITJ.bam"
+    },
+    "induced_pluripotent_stem_cell_male_adult_53_years_derived_from_fibroblast_of_arm":{
+        "File accession_Accessibility bam":"ENCFF379QDB.bam",
+        "File accession_H3K27ac bam":"ENCFF037SCG.bam"
+    },
+    "TrColon":{
+        "File accession_Accessibility bam":"ENCFF629OKO.bam",
+        "File accession_H3K27ac bam":"ENCFF399RUK.bam"
+    },
+    "PC9":{
+        "File accession_Accessibility bam":"ENCFF589MGU.bam",
+        "File accession_H3K27ac bam":"ENCFF824HIQ.bam"
+    },
+    "stomach_male_adult":{
+        "File accession_Accessibility bam":"ENCFF184XKI.bam",
+        "File accession_H3K27ac bam":"ENCFF710FQT.bam"
+    },
+    "thymus_female_fetal_110-113_days":{
+        "File accession_Accessibility bam":"ENCFF719KCS.bam",
+        "File accession_H3K27ac bam":"ENCFF809UKI.bam"
+    },
+    "AG04450":{
+        "File accession_Accessibility bam":"ENCFF172LZS.bam",
+        "File accession_H3K27ac bam":"ENCFF047GDD.bam"
+    },
+    "Panc1":{
+        "File accession_Accessibility bam":"ENCFF556JGQ.bam",
+        "File accession_H3K27ac bam":"ENCFF125NMY.bam"
+    },
+    "SKNMC":{
+        "File accession_Accessibility bam":"ENCFF440KYQ.bam",
+        "File accession_H3K27ac bam":"ENCFF814JSE.bam"
+    },
+    "large_intestine_male_fetal_108_days":{
+        "File accession_Accessibility bam":"ENCFF583XPL.bam",
+        "File accession_H3K27ac bam":"ENCFF805JFJ.bam"
+    },
+    "GM12878":{
+        "File accession_Accessibility bam":"ENCFF775ZJX.bam",
+        "File accession_H3K27ac bam":"ENCFF882PRP.bam"
+    },
+    "ovary_female_adult_30_years":{
+        "File accession_Accessibility bam":"ENCFF137NDD.bam",
+        "File accession_H3K27ac bam":"ENCFF052RXC.bam"
+    },
+    "astrocyte":{
+        "File accession_Accessibility bam":"ENCFF540LTJ.bam",
+        "File accession_H3K27ac bam":"ENCFF100JEN.bam"
+    },
+    "B_cell_adult":{
+        "File accession_Accessibility bam":"ENCFF203BEH.bam",
+        "File accession_H3K27ac bam":"ENCFF895XUG.bam"
+    },
+    "bipolar_spindle_neuron_derived_from_induced_pluripotent_stem_cell":{
+        "File accession_Accessibility bam":"ENCFF582CHJ.bam",
+        "File accession_H3K27ac bam":"ENCFF492XPT.bam"
+    },
+    "foreskin_keratinocyte_male_newborn":{
+        "File accession_Accessibility bam":"ENCFF527YHK.bam",
+        "File accession_H3K27ac bam":"ENCFF029MWK.bam"
+    },
+    "foreskin_melanocyte_male_newborn":{
+        "File accession_Accessibility bam":"ENCFF453VLJ.bam",
+        "File accession_H3K27ac bam":"ENCFF753SCK.bam"
+    },
+    "RWPE1":{
+        "File accession_Accessibility bam":"ENCFF688CCE.bam",
+        "File accession_H3K27ac bam":"ENCFF087MEP.bam"
+    },
+    "IMR90":{
+        "File accession_Accessibility bam":"ENCFF869SQU.bam",
+        "File accession_H3K27ac bam":"ENCFF843EAG.bam"
+    },
+    "pancreas_male_adult":{
+        "File accession_Accessibility bam":"ENCFF493ONN.bam",
+        "File accession_H3K27ac bam":"ENCFF025PCK.bam"
+    },
+    "RAA":{
+        "File accession_Accessibility bam":"ENCFF513LVE.bam",
+        "File accession_H3K27ac bam":"ENCFF164FND.bam"
+    },
+    "CD14+_monocytes_from_male_peripheral_blood":{
+        "File accession_Accessibility bam":"ENCFF418HYD.bam",
+        "File accession_H3K27ac bam":"ENCFF452ZIB.bam"
+    },
+    "GM23248":{
+        "File accession_Accessibility bam":"ENCFF523JNF.bam",
+        "File accession_H3K27ac bam":"ENCFF345SWP.bam"
+    },
+    "stomach":{
+        "File accession_Accessibility bam":"ENCFF184XKI.bam",
+        "File accession_H3K27ac bam":"ENCFF164FND.bam"
+    },
+    "heart_left_ventricle":{
+        "File accession_Accessibility bam":"ENCFF702IJE.bam",
+        "File accession_H3K27ac bam":"ENCFF995OXQ.bam"
+    },
+    "sigmoid_colon_female_adult":{
+        "File accession_Accessibility bam":"ENCFF387OFS.bam",
+        "File accession_H3K27ac bam":"ENCFF860KII.bam"
+    },
+    "transverse_colon_female_adult":{
+        "File accession_Accessibility bam":"ENCFF629OKO.bam",
+        "File accession_H3K27ac bam":"ENCFF485QGB.bam"
+    },
+    "Karpas422":{
+        "File accession_Accessibility bam":"ENCFF409IVR.bam",
+        "File accession_H3K27ac bam":"ENCFF119ZDZ.bam"
+    },
+    "keratinocyte_female":{
+        "File accession_Accessibility bam":"ENCFF691SIL.bam",
+        "File accession_H3K27ac bam":"ENCFF986JEU.bam"
+    },
+    "HepG2":{
+        "File accession_Accessibility bam":"ENCFF604OIM.bam",
+        "File accession_H3K27ac bam":"ENCFF638JUP.bam"
+    },
+    "esophagus_muscularis_mucosa_male_adult":{
+        "File accession_Accessibility bam":"ENCFF208ILP.bam",
+        "File accession_H3K27ac bam":"ENCFF717VXE.bam"
+    },
+    "fibroblast_of_dermis":{
+        "File accession_Accessibility bam":"ENCFF625NFJ.bam",
+        "File accession_H3K27ac bam":"ENCFF688WGV.bam"
+    },
+    "tibial_nerve_female_adult":{
+        "File accession_Accessibility bam":"ENCFF372VAD.bam",
+        "File accession_H3K27ac bam":"ENCFF899KZV.bam"
+    },
+    "bipolar_neuron":{
+        "File accession_Accessibility bam":"ENCFF582CHJ.bam",
+        "File accession_H3K27ac bam":"ENCFF492XPT.bam"
+    },
+    "mammary_epithelial_cell_female":{
+        "File accession_Accessibility bam":"ENCFF603EHL.bam",
+        "File accession_H3K27ac bam":"ENCFF674SDM.bam"
+    },
+    "iPSDF6.9":{
+        "File accession_Accessibility bam":"ENCFF770EET.bam",
+        "File accession_H3K27ac bam":"ENCFF623AQQ.bam"
+    },
+    "upper_lobe_of_left_lung_male_adult":{
+        "File accession_Accessibility bam":"ENCFF022PJN.bam",
+        "File accession_H3K27ac bam":"ENCFF623HXA.bam"
+    }
+}
