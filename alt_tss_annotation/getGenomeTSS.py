@@ -30,7 +30,7 @@ def read_tss_file(tss_file):
     """
     Reads in TSS File
     """
-    tss_df = pd.read_csv(args.tss_file, sep="\t", names=['chr', 'start', 'end', 'TargetGeneTSS', 'score', 'strand', 'start_Gene', 'end_Gene', 'TargetGene'])
+    tss_df = pd.read_csv(args.tss_file, sep="\t", names=['chr', 'start', 'end', 'TargetGeneTSS', 'score', 'strand', 'start_Gene', 'end_Gene', 'TargetGene', 'name2'])
     return tss_df
 
 def create_dataframes(data, len_):
@@ -122,9 +122,9 @@ def process_genome_tss(args):
         tss_df_1 = count_single_feature_for_bed(tss_df, args.tss_file, args.chrom_sizes, feature_file, feature, args.outDir, "Genes.TSS1kb", skip_rpkm_quantile=False, force=False, use_fast_count=True)
     chrom_sizes = args.chrom_sizes
     tss_file = args.tss_file
-    sort_command = "bedtools sort -faidx {chrom_sizes} -i {tss_file} > {tss_file}.sorted; mv {tss_file}.sorted {tss_file}".format(**locals())
-    run_command(sort_command)
-    print("Finished Sorting Gene TSS File")
+    #sort_command = "bedtools sort -faidx {chrom_sizes} -i {tss_file} > {tss_file}.sorted; mv {tss_file}.sorted {tss_file}".format(**locals())
+    #run_command(sort_command)
+    #print("Finished Sorting Gene TSS File")
 
     # Take top 2 promoters based on counts 
     tsscounts['PromoterActivityQuantile'] = ((0.0001+tsscounts['H3K27ac.RPKM.quantile'])*(0.0001+tsscounts['DHS.RPKM.quantile'])).rank(method='average', na_option="top", ascending=True, pct=True)
