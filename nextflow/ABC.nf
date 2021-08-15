@@ -88,6 +88,13 @@ BAM_ATAC
   .map{ it -> [ it[0], it[1], it[2] ] } // add channels with code so it gets cloned and stored but don't link it in each workdir
   .set{ BAMS }
 
+if (params.candidates_dir=="") {
+  BAMS
+    .set{ BAMS_CALL_PEAKS }
+} else {
+  BAMS_CALL_PEAKS = Channel.empty()
+}
+
 //////// cCRE INPUT ////////
 
 Channel.fromPath( params.chrsize )
@@ -112,7 +119,7 @@ process call_peaks {
   params.mode =~ /(all)/
 
   input:
-  tuple seqtype, path(bam), path(sizes) from BAMS
+  tuple seqtype, path(bam), path(sizes) from BAMS_CALL_PEAKS
 
   output:
   tuple gn, path("*.narrowPeak.sorted") into PEAKS
@@ -139,6 +146,10 @@ process call_peaks {
 
 }
 
+BSI
+  .map{ it -> [it[0], it[1].baseName, it[1]] }
+  .set{ BSIGN }
+
 process sort_index {
   label 'samtools'
   publishDir "${params.outdir}/bams/", pattern: "*.psort.bam"
@@ -148,7 +159,7 @@ process sort_index {
   params.mode =~ /(all)/
 
   input:
-  tuple seqtype, gn, path(bam) from BSI.map{ it -> [it[0], it[1].baseName, it[1]] }
+  tuple seqtype, gn, path(bam) from BSIGN
 
   output:
   tuple gn, seqtype, path("*.bam"), path("*.bam.bai") into MBAM, CBAM
