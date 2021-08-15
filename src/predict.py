@@ -28,6 +28,7 @@ def get_model_argument_parser():
     #hic
     #To do: validate params
     parser.add_argument('--HiCdir', default=None, help="HiC directory")
+    parser.add_argument('--hichip', action="store_true", default=False, help="HiCDir contains HiChIP data")
     parser.add_argument('--hic_resolution', type=int, help="HiC resolution")
     parser.add_argument('--tss_hic_contribution', type=float, default=100, help="Weighting of diagonal bin of hic matrix as a percentage of the maximum of its neighboring bins")
     parser.add_argument('--hic_pseudocount_distance', type=int, default=1e6, help="A pseudocount is added equal to the powerlaw fit at this distance")
@@ -70,7 +71,7 @@ def main():
         os.makedirs(args.outdir)
 
     write_params(args, os.path.join(args.outdir, "parameters.predict.txt"))
-    
+
     print("reading genes")
     genes = pd.read_csv(args.genes, sep = "\t")
     genes = determine_expressed_genes(genes, args.expression_cutoff, args.promoter_activity_quantile_cutoff)
@@ -94,7 +95,7 @@ def main():
 
     #Make predictions
     if args.chromosomes == "all":
-        chromosomes = set(genes['chr']).intersection(set(enhancers['chr'])) 
+        chromosomes = set(genes['chr']).intersection(set(enhancers['chr']))
         if not args.include_chrY:
             chromosomes.discard('chrY')
     else:
@@ -107,6 +108,7 @@ def main():
         this_enh = enhancers.loc[enhancers['chr'] == chromosome, :].copy()
         this_genes = genes.loc[genes['chr'] == chromosome, :].copy()
 
+        # make_predictions() in predictor.py
         this_chr = make_predictions(chromosome, this_enh, this_genes, args)
         all_putative_list.append(this_chr)
 
@@ -125,10 +127,10 @@ def main():
     all_positive.to_csv(pred_file_full, sep="\t", index=False, header=True, float_format="%.6f")
     all_positive[slim_cols].to_csv(pred_file_slim, sep="\t", index=False, header=True, float_format="%.6f")
 
-    
+
     make_gene_prediction_stats(all_putative, args)
     write_connections_bedpe_format(all_positive, pred_file_bedpe, args.score_column)
-    
+
     if args.make_all_putative:
         if not args.use_hdf5:
             all_putative.loc[all_putative.TargetGeneIsExpressed,:].to_csv(all_pred_file_expressed, sep="\t", index=False, header=True, compression="gzip", float_format="%.6f", na_rep="NaN")
@@ -138,11 +140,11 @@ def main():
             all_pred_file_nonexpressed = os.path.join(args.outdir, "EnhancerPredictionsAllPutativeNonExpressedGenes.h5")
             all_putative.loc[all_putative.TargetGeneIsExpressed,:].to_hdf(all_pred_file_expressed, key='predictions', complevel=9, mode='w')
             all_putative.loc[~all_putative.TargetGeneIsExpressed,:].to_hdf(all_pred_file_nonexpressed, key='predictions', complevel=9, mode='w')
-   
+
     test_variant_overlap(args, all_putative)
 
     print("Done.")
-    
+
 def validate_args(args):
     if args.HiCdir and args.hic_type == 'juicebox':
         assert args.hic_resolution is not None, 'HiC resolution must be provided if hic_type is juicebox'
@@ -152,4 +154,3 @@ def validate_args(args):
 
 if __name__ == '__main__':
     main()
-    

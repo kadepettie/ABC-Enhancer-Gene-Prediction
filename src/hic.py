@@ -35,22 +35,28 @@ def hic_exists(file):
     else:
         return (os.path.getsize(file) > 0)
 
-def load_hic(hic_file, hic_norm_file, hic_is_vc, hic_type, hic_resolution, tss_hic_contribution, window, min_window, gamma, interpolate_nan=True, apply_diagonal_bin_correction=True):
+def load_hic(hic_file, hic_norm_file, hic_is_vc, hic_type, hic_resolution, tss_hic_contribution, window, min_window, gamma, interpolate_nan=True, apply_diagonal_bin_correction=True, hichip=False):
     print("Loading HiC")
 
     if hic_type == 'juicebox':
         HiC_sparse_mat = hic_to_sparse(hic_file, hic_norm_file, hic_resolution)
-        HiC = process_hic(hic_mat = HiC_sparse_mat, 
+        HiC = process_hic(hic_mat = HiC_sparse_mat,
                             hic_norm_file = hic_norm_file,
                             hic_is_vc = hic_is_vc,
-                            resolution = hic_resolution, 
-                            tss_hic_contribution = tss_hic_contribution, 
-                            window = window, 
-                            min_window = min_window, 
+                            resolution = hic_resolution,
+                            tss_hic_contribution = tss_hic_contribution,
+                            window = window,
+                            min_window = min_window,
                             gamma = gamma,
                             interpolate_nan = interpolate_nan,
                             apply_diagonal_bin_correction = apply_diagonal_bin_correction)
         #HiC = juicebox_to_bedpe(HiC, chromosome, args)
+
+    # currently hichip bedpe format has no 'name' column
+    elif (hic_type == 'bedpe') & hichip:
+        HiC = pd.read_csv(hic_file, sep="\t", names = ['chr1','x1','x2','chr2','y1','y2','hic_contact'])
+
+
     elif hic_type == 'bedpe':
         HiC = pd.read_csv(hic_file, sep="\t", names = ['chr1','x1','x2','chr2','y1','y2','name','hic_contact'])
 
@@ -121,7 +127,7 @@ def process_hic(hic_mat, hic_norm_file, hic_is_vc, resolution, tss_hic_contribut
 
     #Fill NaN
     #NaN in the KR normalized matrix are not zeros. They are entries where the KR algorithm did not converge (or low KR norm)
-    #So need to fill these. Use powerlaw. 
+    #So need to fill these. Use powerlaw.
     #Not ideal obviously but the scipy interpolation algos are either very slow or don't work since the nan structure implies that not all nans are interpolated
     if interpolate_nan:
         nan_loc = np.isnan(hic_df['hic_contact'])
@@ -192,7 +198,7 @@ def get_powerlaw_at_distance(distances, gamma, min_distance=5000, scale=None):
     log_dists = np.log(distances + 1)
 
     #Determine scale parameter
-    #A powerlaw distribution has two parameters: the exponent and the minimum domain value 
+    #A powerlaw distribution has two parameters: the exponent and the minimum domain value
     #In our case, the minimum domain value is always constant (equal to 1 HiC bin) so there should only be 1 parameter
     #The current fitting approach does a linear regression in log-log space which produces both a slope (gamma) and a intercept (scale)
     #Empirically there is a linear relationship between these parameters (which makes sense since we expect only a single parameter distribution)
@@ -209,7 +215,7 @@ def get_powerlaw_at_distance(distances, gamma, min_distance=5000, scale=None):
     return(powerlaw_contact)
 
 def process_vc(hic):
-    #For a vc normalized matrix, need to make rows sum to 1. 
+    #For a vc normalized matrix, need to make rows sum to 1.
     #Assume rows correspond to genes and cols to enhancers
 
     row_sums = hic.sum(axis = 0)
@@ -220,4 +226,3 @@ def process_vc(hic):
     hic = norm_mat * hic
 
     return(hic)
-

@@ -13,10 +13,11 @@ def make_predictions(chromosome, enhancers, genes, args):
 
     #if Hi-C directory is not provided, only powerlaw model will be computed
     if args.HiCdir:
+        # get_hic_file() from hic.py
         hic_file, hic_norm_file, hic_is_vc = get_hic_file(chromosome, args.HiCdir, hic_type = args.hic_type)
         pred = add_hic_to_enh_gene_table(enhancers, genes, pred, hic_file, hic_norm_file, hic_is_vc, chromosome, args)
         pred = compute_score(pred, [pred['activity_base'], pred['hic_contact_pl_scaled_adj']], "ABC")
-    
+
     pred = compute_score(pred, [pred['activity_base'], pred['powerlaw_contact_reference']], "powerlaw")
 
     return pred
@@ -24,7 +25,7 @@ def make_predictions(chromosome, enhancers, genes, args):
 def make_pred_table(chromosome, enh, genes, args):
     print('Making putative predictions table...')
     t = time.time()
- 
+
     enh['enh_midpoint'] = (enh['start'] + enh['end'])/2
     enh['enh_idx'] = enh.index
     genes['gene_idx'] = genes.index
@@ -40,8 +41,8 @@ def make_pred_table(chromosome, enh, genes, args):
     #     enh['temp_merge_key'] = 0
     #     genes['temp_merge_key'] = 0
 
-    #     #Make cartesian product and then subset to EG pairs within window. 
-    #     #TO DO: Replace with pyranges equivalent of bedtools intersect or GRanges overlaps 
+    #     #Make cartesian product and then subset to EG pairs within window.
+    #     #TO DO: Replace with pyranges equivalent of bedtools intersect or GRanges overlaps
     #     pred = pd.merge(enh, genes, on = 'temp_merge_key')
 
     #     pred['enh_midpoint'] = (pred['start'] + pred['end'])/2
@@ -55,18 +56,20 @@ def make_pred_table(chromosome, enh, genes, args):
 
 def add_hic_to_enh_gene_table(enh, genes, pred, hic_file, hic_norm_file, hic_is_vc, chromosome, args):
     print('Begin HiC')
-    HiC = load_hic(hic_file = hic_file, 
+    # load_hic() from hic.py
+    HiC = load_hic(hic_file = hic_file,
                     hic_norm_file = hic_norm_file,
                     hic_is_vc = hic_is_vc,
-                    hic_type = args.hic_type, 
-                    hic_resolution = args.hic_resolution, 
-                    tss_hic_contribution = args.tss_hic_contribution, 
-                    window = args.window, 
-                    min_window = 0, 
-                    gamma = args.hic_gamma)
+                    hic_type = args.hic_type,
+                    hic_resolution = args.hic_resolution,
+                    tss_hic_contribution = args.tss_hic_contribution,
+                    window = args.window,
+                    min_window = 0,
+                    gamma = args.hic_gamma,
+                    hichip = args.hichip)
 
     #Add hic to pred table
-    #At this point we have a table where each row is an enhancer/gene pair. 
+    #At this point we have a table where each row is an enhancer/gene pair.
     #We need to add the corresponding HiC matrix entry.
     #If the HiC is provided in juicebox format (ie constant resolution), then we can just merge using the indices
     #But more generally we do not want to assume constant resolution. In this case hic should be provided in bedpe format
@@ -74,7 +77,7 @@ def add_hic_to_enh_gene_table(enh, genes, pred, hic_file, hic_norm_file, hic_is_
     t = time.time()
     if args.hic_type == "bedpe":
         #Use pyranges to compute overlaps between enhancers/genes and hic bedpe table
-        #Consider each range of the hic matrix separately - and merge each range into both enhancers and genes. 
+        #Consider each range of the hic matrix separately - and merge each range into both enhancers and genes.
         #Then remerge on hic index
 
         HiC['hic_idx'] = HiC.index
@@ -100,7 +103,7 @@ def add_hic_to_enh_gene_table(enh, genes, pred, hic_file, hic_norm_file, hic_is_
         #Could also do this by indexing into the sparse matrix (instead of merge) but this seems to be slower
         #Index into sparse matrix
         #pred['hic_contact'] = [HiC[i,j] for (i,j) in pred[['enh_bin','tss_bin']].values.tolist()]
-        
+
         pred['enh_bin'] = np.floor(pred['enh_midpoint'] / args.hic_resolution).astype(int)
         pred['tss_bin'] = np.floor(pred['TargetGeneTSS'] / args.hic_resolution).astype(int)
         if not hic_is_vc:
@@ -121,14 +124,20 @@ def add_hic_to_enh_gene_table(enh, genes, pred, hic_file, hic_norm_file, hic_is_
         pred = qc_hic(pred)
 
     pred.drop(['x1','x2','y1','y2','bin1','bin2','enh_idx','gene_idx','hic_idx','enh_midpoint','tss_bin','enh_bin'], inplace=True, axis = 1, errors='ignore')
-        
+
     print('HiC added to predictions table. Elapsed time: {}'.format(time.time() - t))
 
     # Add powerlaw scaling
     pred = scale_hic_with_powerlaw(pred, args)
 
-    #Add pseudocount
-    pred = add_hic_pseudocount(pred, args)
+    if args.hichip:
+        # currently adds hichip normalized column as 'hic_contact_pl_scaled_adj'
+        # for continuity with downstream processing
+        pred = normalize_hichip(pred)
+    else:
+        # Adds pseudocount as 'hic_contact_pl_scaled_adj' column
+        pred = add_hic_pseudocount(pred, args)
+
 
     print("HiC Complete")
     #print('Elapsed time: {}'.format(time.time() - t))
@@ -156,7 +165,7 @@ def add_hic_pseudocount(pred, args):
 
     powerlaw_fit = get_powerlaw_at_distance(pred['distance'].values, args.hic_gamma)
     powerlaw_fit_at_ref = get_powerlaw_at_distance(args.hic_pseudocount_distance, args.hic_gamma)
-    
+
     pseudocount = np.amin(pd.DataFrame({'a' : powerlaw_fit, 'b' : powerlaw_fit_at_ref}), axis = 1)
     pred['hic_pseudocount'] = pseudocount
     pred['hic_contact_pl_scaled_adj'] = pred['hic_contact_pl_scaled'] + pseudocount
@@ -172,6 +181,15 @@ def qc_hic(pred, threshold = .01):
     pred.loc[pred['TargetGene'].isin(bad_genes), 'hic_contact'] = np.nan
 
     return pred
+
+def normalize_hichip(enhancers):
+    # group by TargetGene
+    # divide each hichip contact count by sum of counts across all candidates
+    # divide each by the maximimum normalized (previous step) candidate count (normalizes for comparison across genes)
+    enhancers['hic_contact_sum1'] = enhancers['hic_contact'] / enhancers.groupby('TargetGene')['hic_contact'].transform('sum')
+    enhancers['hic_contact_pl_scaled_adj'] = enhancers['hic_contact_sum1'] / enhancers.groupby('TargetGene')['hic_contact_sum1'].transform('max')
+
+    return(enhancers)
 
 def compute_score(enhancers, product_terms, prefix):
 
