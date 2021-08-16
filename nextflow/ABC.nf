@@ -129,21 +129,37 @@ process call_peaks {
   // TODO: use macs2 if seqtype=='dhs'
   // TODO: ensure bam is name-sorted for genrich (?)
   gn = bam.baseName
-  """
-  ${params.genrich_bin}/Genrich -t $bam \
-  -o ${gn}.narrowPeak \
-  -v \
-  -f ${gn}.pileup.qvals.bedgraph \
-  -k ${gn}.pileup.pvals.bedgraph \
-  -y \
-  -j \
-  -d 151 \
-  -p 0.1; \
-  bedtools sort -faidx $sizes \
-  -i ${gn}.narrowPeak \
-  > ${gn}.narrowPeak.sorted
-  """
-
+  if (seqtype=='atac') {
+    """
+    ${params.genrich_bin}/Genrich -t $bam \
+    -o ${gn}.narrowPeak \
+    -v \
+    -f ${gn}.pileup.qvals.bedgraph \
+    -k ${gn}.pileup.pvals.bedgraph \
+    -y \
+    -j \
+    -d 151 \
+    -p 0.1; \
+    bedtools sort -faidx $sizes \
+    -i ${gn}.narrowPeak \
+    > ${gn}.narrowPeak.sorted
+    """
+  } else {
+    """
+    ${params.genrich_bin}/Genrich -t $bam \
+    -o ${gn}.narrowPeak \
+    -v \
+    -f ${gn}.pileup.qvals.bedgraph \
+    -k ${gn}.pileup.pvals.bedgraph \
+    -y \
+    -D \
+    -d 151 \
+    -p 0.1; \
+    bedtools sort -faidx $sizes \
+    -i ${gn}.narrowPeak \
+    > ${gn}.narrowPeak.sorted
+    """
+  }
 }
 
 BSI
@@ -333,7 +349,7 @@ process hichip_predict {
       --hichip \
       --chrom_sizes $s \
       --hic_resolution 5000 \
-      --window 5000000 \
+      --window 450000 \
       --score_column ABC.Score \
       --threshold .02 \
       --cellType $sn \
