@@ -376,7 +376,7 @@ process hichip_predict {
       --hichip \
       --chrom_sizes $s \
       --hic_resolution 5000 \
-      --window 450000 \
+      --window ${params.window} \
       --score_column ABC.Score \
       --threshold .02 \
       --cellType $sn \
@@ -392,7 +392,7 @@ process hichip_predict {
       --hic_type ${params.hic_type} \
       --chrom_sizes $s \
       --hic_resolution 5000 \
-      --window 5000000 \
+      --window ${params.window} \
       --scale_hic_using_powerlaw \
       --score_column ABC.Score \
       --threshold .02 \
@@ -408,7 +408,7 @@ process hichip_predict {
     --genes $gene \
     --chrom_sizes $s \
     --hic_resolution 5000 \
-    --window 5000000 \
+    --window ${params.window} \
     --scale_hic_using_powerlaw \
     --score_column powerlaw.Score \
     --threshold .02 \
