@@ -109,7 +109,14 @@ def main():
         this_genes = genes.loc[genes['chr'] == chromosome, :].copy()
 
         # make_predictions() in predictor.py
-        this_chr = make_predictions(chromosome, this_enh, this_genes, args)
+        # for now skip on KeyError where enh - gene joining yields nonexistant columns
+        # --> one is empty in benchmarking comparison for some chromosomes
+        # using limited candidateRegion set
+        try:
+            this_chr = make_predictions(chromosome, this_enh, this_genes, args)
+        except KeyError as e:
+            continue
+        
         all_putative_list.append(this_chr)
 
         print('Completed chromosome: {}. Elapsed time: {} \n'.format(chromosome, time.time() - t))
