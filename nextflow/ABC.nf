@@ -190,7 +190,7 @@ process call_peaks {
 }
 
 BSI
-  .map{ it -> [it[0], it[1].baseName, it[1]] }
+  .map{ it -> [it[0], it[1].baseName + ".nsort", it[1]] }
   .set{ BSIGN }
 
 process sort_index {
