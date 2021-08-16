@@ -83,16 +83,13 @@ BAM_ATAC
   .mix(BAM_DHS)
   .tap{ BSI }
   .tap{ GCRE_BAM }
-  .combine( Channel.fromPath( params.chrsize ) )
-  .combine( BIN1.combine(BIN2) )
-  .map{ it -> [ it[0], it[1], it[2] ] } // add channels with code so it gets cloned and stored but don't link it in each workdir
   .set{ BAMS }
 
 if (params.candidates_dir=="") {
   BAMS
-    .set{ BAMS_CALL_PEAKS }
+    .set{ BAMS_NSORT }
 } else {
-  BAMS_CALL_PEAKS = Channel.empty()
+  BAMS_NSORT = Channel.empty()
 }
 
 //////// cCRE INPUT ////////
@@ -104,6 +101,36 @@ Channel.fromPath( params.chrsize )
 
 
 /////// PROCESSES ////////
+
+process namesort {
+  label 'samtools'
+
+  when:
+  params.mode =~ /(all)/
+
+  input:
+  tuple seqtype, path(bam) from BAMS_NSORT
+
+  output:
+  tuple seqtype, path(outname) into BAM_NSORTED
+
+  script:
+  outname = "${bam.baseName}.nsort.bam"
+  """
+  samtools sort \
+  -n \
+  -@ ${params.samcores} \
+  -o $outname \
+  $bam
+  """
+
+}
+
+BAM_NSORTED
+  .combine( Channel.fromPath( params.chrsize ) )
+  .combine( BIN1.combine(BIN2) )
+  .map{ it -> [ it[0], it[1], it[2] ] } // add channels with code so it gets cloned and stored but don't link it in each workdir
+  .set{ BAMS_CALL_PEAKS}
 
 process call_peaks {
   label 'genrich'
