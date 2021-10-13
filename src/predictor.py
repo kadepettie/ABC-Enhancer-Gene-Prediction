@@ -54,6 +54,52 @@ def make_pred_table(chromosome, enh, genes, args):
 
     return pred
 
+def run_qnorm_hic(df, qnorm, qnorm_method = "rank", separate_promoters = True):
+
+    # TODO: edit this to quantile normalize HiChIP with qnorm ref file
+    #       before qnorm_hichip step
+
+    # Quantile normalize epigenetic data to a reference
+    #
+    # Option to qnorm promoters and nonpromoters separately
+
+    if qnorm is None:
+        if 'hic_contact' in df.columns: df['normalized_hic_contact'] = df['hic_contact']
+    else:
+        qnorm = pd.read_csv(qnorm, sep = "\t")
+        nRegions = df.shape[0]
+        col_dict = {'hic_contact' : 'normalized_hic_contact'}
+
+        for col in set(df.columns & col_dict.keys()): 
+            # edit here for col_names of pred
+            if not separate_promoters:
+                qnorm = qnorm.loc[qnorm['enh_class' == "any"]]
+                if qnorm_method == "rank":
+                    interpfunc = interpolate.interp1d(qnorm['rank'], qnorm[col], kind='linear', fill_value='extrapolate')
+                    df[col_dict[col]] = interpfunc((1 - df[col + ".quantile"]) * nRegions).clip(0)
+                elif qnorm_method == "quantile":
+                    interpfunc = interpolate.interp1d(qnorm['quantile'], qnorm[col], kind='linear', fill_value='extrapolate')
+                    df[col_dict[col]] = interpfunc(df[col + ".quantile"]).clip(0)
+            else:
+                for enh_class in ['promoter','nonpromoter']:
+                    this_qnorm = qnorm.loc[qnorm['enh_class'] == enh_class]
+
+                    #Need to recompute quantiles within each class
+                    if enh_class == 'promoter':
+                        this_idx = df.index[np.logical_or(df['class'] == "tss", df['class'] == "promoter")]
+                    else:
+                        this_idx = df.index[np.logical_and(df['class'] != "tss" , df['class'] != "promoter")]
+                    df.loc[this_idx, col + enh_class + ".quantile"] = df.loc[this_idx, col].rank()/len(this_idx)
+
+                    if qnorm_method == "rank":
+                        interpfunc = interpolate.interp1d(this_qnorm['rank'], this_qnorm[col], kind='linear', fill_value='extrapolate')
+                        df.loc[this_idx, col_dict[col]] = interpfunc((1 - df.loc[this_idx, col + enh_class + ".quantile"]) * len(this_idx)).clip(0)
+                    elif qnorm_method == "quantile":
+                        interpfunc = interpolate.interp1d(this_qnorm['quantile'], this_qnorm[col], kind='linear', fill_value='extrapolate')
+                        df.loc[this_idx, col_dict[col]] = interpfunc(df.loc[this_idx, col + enh_class + ".quantile"]).clip(0)
+
+    return df
+
 def add_hic_to_enh_gene_table(enh, genes, pred, hic_file, hic_norm_file, hic_is_vc, chromosome, args):
     print('Begin HiC')
     # load_hic() from hic.py
@@ -127,6 +173,8 @@ def add_hic_to_enh_gene_table(enh, genes, pred, hic_file, hic_norm_file, hic_is_
 
     print('HiC added to predictions table. Elapsed time: {}'.format(time.time() - t))
 
+    # Run quantile normalization, if reference given
+    pred = run_qnorm_hic(pred, args)
     # Add powerlaw scaling
     pred = scale_hic_with_powerlaw(pred, args)
 
@@ -148,9 +196,9 @@ def scale_hic_with_powerlaw(pred, args):
     #Scale hic values to reference powerlaw
 
     if not args.scale_hic_using_powerlaw:
-        pred['hic_contact_pl_scaled'] = pred['hic_contact']
+        pred['hic_contact_pl_scaled'] = pred['normalized_hic_contact']
     else:
-        pred['hic_contact_pl_scaled'] = pred['hic_contact'] * (pred['powerlaw_contact_reference'] / pred['powerlaw_contact'])
+        pred['hic_contact_pl_scaled'] = pred['normalized_hic_contact'] * (pred['powerlaw_contact_reference'] / pred['powerlaw_contact'])
 
     return(pred)
 

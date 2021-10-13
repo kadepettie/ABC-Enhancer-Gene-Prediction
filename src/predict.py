@@ -29,6 +29,7 @@ def get_model_argument_parser():
     #To do: validate params
     parser.add_argument('--HiCdir', default=None, help="HiC directory")
     parser.add_argument('--hichip', action="store_true", default=False, help="HiCDir contains HiChIP data")
+    parser.add_argument('--qnorm', default=None, help="Quantile normalization reference file for HiC/HiChIP data")
     parser.add_argument('--hic_resolution', type=int, help="HiC resolution")
     parser.add_argument('--tss_hic_contribution', type=float, default=100, help="Weighting of diagonal bin of hic matrix as a percentage of the maximum of its neighboring bins")
     parser.add_argument('--hic_pseudocount_distance', type=int, default=1e6, help="A pseudocount is added equal to the powerlaw fit at this distance")
@@ -116,7 +117,7 @@ def main():
             this_chr = make_predictions(chromosome, this_enh, this_genes, args)
         except KeyError as e:
             continue
-        
+
         all_putative_list.append(this_chr)
 
         print('Completed chromosome: {}. Elapsed time: {} \n'.format(chromosome, time.time() - t))

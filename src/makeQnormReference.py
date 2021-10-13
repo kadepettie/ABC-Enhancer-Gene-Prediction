@@ -13,7 +13,9 @@ def parseargs(required_args=True):
 
     parser.add_argument('--enhancers', required=required_args, help="EnhancerList file")
     parser.add_argument('--outfile', default="", help="columns for which to compute qnorm reference")
-    parser.add_argument('--cols', default="DHS.RPM,H3K27ac.RPM", help="columns for which to compute qnorm reference")
+    parser.add_argument('--cols',
+                        default="DHS.RPM,H3K27ac.RPM",
+                        help="columns for which to compute qnorm reference (`hic_contact` to qnorm HiC/HiChIP data in predict.py EnhancerPredictionsAllPutative.txt.gz output given as `--enhancers` argument.)")
 
     args = parser.parse_args()
     return args
@@ -42,7 +44,7 @@ def makeQnorm(args):
 
         cols = set(set(vars(args)['cols'].split(",")) & set(this_enhancers.columns))
         for col in cols:
-            # get ATAC.RPM (or DHS or H3K27ac) value corresponding to each specified quantile 
+            # get ATAC.RPM (or DHS or H3K27ac or hic_contact) value corresponding to each specified quantile
             this_ref[col] = np.percentile(this_enhancers[col].values, this_ref['quantile'].values*100)
 
         ref.append(this_ref)
