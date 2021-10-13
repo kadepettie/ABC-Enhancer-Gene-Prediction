@@ -56,9 +56,6 @@ def make_pred_table(chromosome, enh, genes, args):
 
 def run_qnorm_hic(df, qnorm, qnorm_method = "rank", separate_promoters = True):
 
-    # TODO: edit this to quantile normalize HiChIP with qnorm ref file
-    #       before qnorm_hichip step
-
     # Quantile normalize epigenetic data to a reference
     #
     # Option to qnorm promoters and nonpromoters separately
@@ -174,7 +171,7 @@ def add_hic_to_enh_gene_table(enh, genes, pred, hic_file, hic_norm_file, hic_is_
     print('HiC added to predictions table. Elapsed time: {}'.format(time.time() - t))
 
     # Run quantile normalization, if reference given
-    pred = run_qnorm_hic(pred, args)
+    pred = run_qnorm_hic(pred, args.qnorm)
     # Add powerlaw scaling
     pred = scale_hic_with_powerlaw(pred, args)
 
