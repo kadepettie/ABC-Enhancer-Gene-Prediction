@@ -67,7 +67,7 @@ def run_qnorm_hic(df, qnorm, qnorm_method = "rank", separate_promoters = True):
         nRegions = df.shape[0]
         col_dict = {'hic_contact' : 'normalized_hic_contact'}
 
-        for col in set(df.columns & col_dict.keys()): 
+        for col in set(df.columns & col_dict.keys()):
             # edit here for col_names of pred
             if not separate_promoters:
                 qnorm = qnorm.loc[qnorm['enh_class' == "any"]]
@@ -229,9 +229,9 @@ def qc_hic(pred, threshold = .01):
 
 def normalize_hichip(enhancers):
     # group by TargetGene
-    # divide each hichip contact count by sum of counts across all candidates
+    # divide each hichip contact count by sum of (quantile-normalized) counts across all candidates
     # divide each by the maximimum normalized (previous step) candidate count (normalizes for comparison across genes)
-    enhancers['hic_contact_sum1'] = enhancers['hic_contact'] / enhancers.groupby('TargetGene')['hic_contact'].transform('sum')
+    enhancers['hic_contact_sum1'] = enhancers['hic_contact_pl_scaled'] / enhancers.groupby('TargetGene')['hic_contact_pl_scaled'].transform('sum')
     enhancers['hic_contact_pl_scaled_adj'] = enhancers['hic_contact_sum1'] / enhancers.groupby('TargetGene')['hic_contact_sum1'].transform('max')
 
     return(enhancers)
