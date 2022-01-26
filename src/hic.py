@@ -54,7 +54,7 @@ def load_hic(hic_file, hic_norm_file, hic_is_vc, hic_type, hic_resolution, tss_h
 
     # currently hichip bedpe format has no 'name' column
     elif (hic_type == 'bedpe') & hichip:
-        HiC = pd.read_csv(hic_file, sep="\t", names = ['chr1','x1','x2','chr2','y1','y2','hic_contact'])
+        HiC = pd.read_csv(hic_file, sep="\t", names = ['chr1','x1','x2','chr2','y1','y2','hic_contact','hic_bin1_total','hic_bin2_total'])
 
 
     elif hic_type == 'bedpe':
