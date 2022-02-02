@@ -49,6 +49,7 @@ def get_model_argument_parser():
     #Output formatting
     parser.add_argument('--make_all_putative', action="store_true", help="Make big file with concatenation of all genes file")
     parser.add_argument('--use_hdf5', action="store_true", help="Write AllPutative file in hdf5 format instead of tab-delimited")
+    parser.add_argument('--include_nonexpressed', action="store_true", help="Included non-expressed genes in EnhancerPredictionsAllPutative.txt.gz")
 
     #Other
     parser.add_argument('--tss_slop', type=int, default=500, help="Distance from tss to search for self-promoters")
@@ -141,12 +142,18 @@ def main():
 
     if args.make_all_putative:
         if not args.use_hdf5:
-            all_putative.loc[all_putative.TargetGeneIsExpressed,:].to_csv(all_pred_file_expressed, sep="\t", index=False, header=True, compression="gzip", float_format="%.6f", na_rep="NaN")
+            if args.include_nonexpressed:
+                all_putative.to_csv(all_pred_file_expressed, sep="\t", index=False, header=True, compression="gzip", float_format="%.6f", na_rep="NaN")
+            else:
+                all_putative.loc[all_putative.TargetGeneIsExpressed,:].to_csv(all_pred_file_expressed, sep="\t", index=False, header=True, compression="gzip", float_format="%.6f", na_rep="NaN")
             all_putative.loc[~all_putative.TargetGeneIsExpressed,:].to_csv(all_pred_file_nonexpressed, sep="\t", index=False, header=True, compression="gzip", float_format="%.6f", na_rep="NaN")
         else:
             all_pred_file_expressed = os.path.join(args.outdir, "EnhancerPredictionsAllPutative.h5")
             all_pred_file_nonexpressed = os.path.join(args.outdir, "EnhancerPredictionsAllPutativeNonExpressedGenes.h5")
-            all_putative.loc[all_putative.TargetGeneIsExpressed,:].to_hdf(all_pred_file_expressed, key='predictions', complevel=9, mode='w')
+            if args.include_nonexpressed:
+                all_putative.to_hdf(all_pred_file_expressed, key='predictions', complevel=9, mode='w')
+            else:
+                all_putative.loc[all_putative.TargetGeneIsExpressed,:].to_hdf(all_pred_file_expressed, key='predictions', complevel=9, mode='w')
             all_putative.loc[~all_putative.TargetGeneIsExpressed,:].to_hdf(all_pred_file_nonexpressed, key='predictions', complevel=9, mode='w')
 
     test_variant_overlap(args, all_putative)
